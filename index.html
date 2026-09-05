@@ -218,6 +218,12 @@
   .img-preview-box{position:relative;max-width:92vw;max-height:92vh;display:flex;align-items:center;justify-content:center}
   .img-preview-box img{max-width:92vw;max-height:92vh;object-fit:contain;border-radius:var(--r-lg);background:#fff;border:1px solid var(--line-strong)}
   .img-preview-close{position:absolute;top:-14px;right:-14px;width:36px;height:36px;border-radius:var(--r-md);border:1px solid var(--line-strong);background:#fff;color:var(--text);font-size:22px;line-height:1;cursor:pointer}
+  /* 包装文件预览（图片 / PDF 内嵌查看） */
+  #packPreviewMask{align-items:center;z-index:210}
+  .pack-preview-box{position:relative;max-width:94vw;max-height:94vh;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:var(--r-lg);border:1px solid var(--line-strong);overflow:hidden;padding:14px}
+  .pack-preview-box img{max-width:90vw;max-height:88vh;object-fit:contain}
+  .pack-preview-box iframe{width:88vw;height:82vh;border:none;border-radius:var(--r-md);background:#f5f6f8}
+  .pack-preview-name{position:absolute;left:0;top:0;right:0;padding:6px 12px;background:linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,0));color:#fff;font-size:12px;z-index:1;pointer-events:none}
 
   /* ── 批量工具：查找替换（类 Excel） ── */
   .bt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:10px}
@@ -489,7 +495,7 @@
     <div class="brand" data-page-node-id="MAYRjmz2R94fupFbdijC1C">
       <div class="logo" data-page-node-id="QNnUylgUKmDlDlgKJO3JMX">锁</div>
       <div data-page-node-id="Vt43R8ON0dGcKN3ANHBr8q">
-        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.09</small></h1>
+        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.11</small></h1>
       </div>
     </div>
 
@@ -768,8 +774,10 @@
   <div class="panel" id="panel-system">
     <div class="card">
       <h2>系统版本 <span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:6px">更新记录</span></h2>
-      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.09</span></div>
+      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.11</span></div>
       <ul class="changelog-list">
+        <li><b>包装文件支持内嵌预览</b>：图片（PNG/JPG/GIF/WebP/BMP/AVIF）与 PDF 类型在包装栏列表新增「预览」按钮，点击在应用内直接用浏览器查看，无需下载；其余格式（AI/CDR 等）仍提供下载。新增预览遮罩层（object URL 渲染，支持滚动锁/ESC/点遮罩关闭）。</li>
+        <li><b>包装文件存储层迁移到 IndexedDB（取消 1.2MB 限制）</b>：包装设计文件（PDF/AI/CDR/图片等）实体改存浏览器 IndexedDB 的 <code>packfiles</code> store（单文件上限提升至 200MB），产品数据只保留文件 meta（id/名称/大小/类型），彻底摆脱 localStorage 5MB 配额；历史内嵌 dataUrl 数据自动迁移，旧「仅登记未内嵌」文件标记「未保存」待重新上传。S3 同步同步扩展：上传/下载将包装文件与产品图一并纳入 imageMap 通道并按 id 前缀（img_/pf_）分发还原，跨设备可完整取回包装文件；导出/导入备份新增 packFiles 字段兼容往返；删除产品/保存后自动 GC 清理 IndexedDB 孤儿实体。</li>
         <li><b>修复新设备下载后产品图裂开</b>：根因是 S3 同步的 <code>latest.json</code> 里 <code>imageMap</code> 格式不一致——上传端写入的是裸 hash 字符串 <code>imgId→hash</code>，而下载端按对象 <code>remote[id].hash</code> 读取，读到 undefined 导致请求 <code>images/undefined.enc</code>、图片全下载失败。新增兼容助手 <code>imgHashOf()</code> 统一取 hash（兼容旧字符串与新 <code>{hash}</code> 两种格式），上传跳检与下载三处一并修正，新旧云端数据均可正确下载图片。</li>
         <li><b>同步面板增加 HTTPS / Mixed Content 拦截守卫</b>：「同步地址」标题加红字提示「Endpoint 必须 HTTPS」（HTTPS 页面下用 http:// 会被浏览器拦截 Mixed Content）；onSyncCfgChange 检测到 HTTPS 页面下 endpoint 以 http:// 开头时弹 toast 提醒，避免 GitHub Pages 等 HTTPS 部署下同步静默失败。</li>
         <li><b>同步配置导出 / 导入</b>：同步区新增「⤓ 导出配置 / ⤒ 导入配置」按钮，将 S3 同步设置打包为 JSON（参考思源笔记 S3 同步）：含 Endpoint / Region / Bucket / Addressing / AccessKey（明文）及加密的 SecretKey / 口令 blob；另一设备导入后输入相同加密口令即可解锁，免重填大部分配置。</li>
@@ -875,7 +883,7 @@
               把包装设计文件拖到这里，或
               <button class="btn sm" onclick="document.getElementById('packFileInput').click()" data-page-node-id="Q0tanKGkGmT33PPoACeGxP">+ 上传文件</button>
               <input type="file" id="packFileInput" multiple style="display:none" onchange="addPackFiles(event)" data-page-node-id="Gskjm6FrsPFlJyS12wryxB">
-              <div style="margin-top:4px" data-page-node-id="jXh9vxATwLwkEH5BTA8UsT">PDF / AI / CDR / 图片均可；单文件 ≤1.2MB 会内嵌保存，更大的只登记文件名</div>
+              <div style="margin-top:4px" data-page-node-id="jXh9vxATwLwkEH5BTA8UsT">PDF / AI / CDR / 图片均可；文件存于浏览器 IndexedDB（可大于 1.2MB），同步时随产品一并上传</div>
             </div>
             <div class="pack-grid" style="margin-top:10px" data-page-node-id="ZcMJCddqBCsFU6pLbFa4AD">
               <div class="pf" data-page-node-id="JIMxK1hoAOmuYsvryVmUw9"><label data-page-node-id="ABXv5UD2X9dj0BlvtBOiaQ">包装方式</label><input id="pkPackStyle" placeholder="彩盒 / 白盒 / 双泡壳" data-page-node-id="IxqsYt55WyPpALaDlIHKqF"></div>
@@ -936,6 +944,15 @@
   <div class="img-preview-box" data-page-node-id="JFYmGz9a8UlMw3RBJXYfzx">
     <img id="imgPreviewSrc" src="" alt="预览" data-page-node-id="OLDNUk0ITa16IQb8wDHmZI">
     <button class="img-preview-close" title="关闭" onclick="closeImagePreview()" data-page-node-id="evYIhGtTXfOeAaYYpajeVa">×</button>
+  </div>
+</div>
+
+<!-- 包装文件预览（图片 / PDF） -->
+<div class="modal-mask" id="packPreviewMask">
+  <div class="pack-preview-box">
+    <span class="pack-preview-name" id="packPreviewName"></span>
+    <div id="packPreviewHost"></div>
+    <button class="img-preview-close" title="关闭" onclick="closePackPreview()">×</button>
   </div>
 </div>
 
@@ -1150,16 +1167,22 @@ function loadQuoteDraft(){
 // 返回某客户名下的全部产品（隔离：只取 customerId 匹配者）
 function productsOf(cid){ return (DB.products||[]).filter(p=>p && p.customerId===cid); }
 
-// ============ 图片存储层（IndexedDB：突破 localStorage 5MB 配额瓶颈）============
+// ============ 二进制附件存储层（IndexedDB：突破 localStorage 5MB 配额瓶颈）============
+// 两个 store：images（产品图，id 形如 img_xxx）与 packfiles（包装设计文件，id 形如 pf_xxx）。
+// 两者共用同一 DB；S3 同步对两个 store 分别维护 imageMap / packMap，跨设备均可还原。
 const IMG_DB_NAME = 'product_library_imgdb';
 const IMG_STORE = 'images';
+const PACK_STORE = 'packfiles';
 let _imgDBPromise = null;
 function openImgDB(){
   if(_imgDBPromise) return _imgDBPromise;
   _imgDBPromise = new Promise((resolve, reject)=>{
     if(!window.indexedDB){ reject(new Error('当前环境不支持 IndexedDB')); return; }
-    const r = indexedDB.open(IMG_DB_NAME, 1);
-    r.onupgradeneeded = ()=>{ const db=r.result; if(!db.objectStoreNames.contains(IMG_STORE)) db.createObjectStore(IMG_STORE, {keyPath:'id'}); };
+    const r = indexedDB.open(IMG_DB_NAME, 2);
+    r.onupgradeneeded = ()=>{ const db=r.result;
+      if(!db.objectStoreNames.contains(IMG_STORE)) db.createObjectStore(IMG_STORE, {keyPath:'id'});
+      if(!db.objectStoreNames.contains(PACK_STORE)) db.createObjectStore(PACK_STORE, {keyPath:'id'});
+    };
     r.onsuccess = ()=>resolve(r.result);
     r.onerror = ()=>reject(r.error);
   });
@@ -1170,6 +1193,12 @@ async function getImage(id){ const db=await openImgDB(); return new Promise((res
 async function delImage(id){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(IMG_STORE,'readwrite'); tx.objectStore(IMG_STORE).delete(id); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
 async function getAllImages(){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(IMG_STORE,'readonly'); const g=tx.objectStore(IMG_STORE).getAll(); g.onsuccess=()=>res(g.result||[]); g.onerror=()=>rej(g.error); }); }
 async function putAllImages(recs){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(IMG_STORE,'readwrite'); (recs||[]).forEach(r=>tx.objectStore(IMG_STORE).put(r)); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
+// pack 文件（包装设计文件：PDF/AI/CDR/图片等，原内嵌 localStorage 有 1.2MB 限制，现统一存 IndexedDB）
+async function putPackFile(rec){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(PACK_STORE,'readwrite'); tx.objectStore(PACK_STORE).put(rec); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
+async function getPackFile(id){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(PACK_STORE,'readonly'); const g=tx.objectStore(PACK_STORE).get(id); g.onsuccess=()=>res(g.result); g.onerror=()=>rej(g.error); }); }
+async function delPackFile(id){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(PACK_STORE,'readwrite'); tx.objectStore(PACK_STORE).delete(id); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
+async function getAllPackFiles(){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(PACK_STORE,'readonly'); const g=tx.objectStore(PACK_STORE).getAll(); g.onsuccess=()=>res(g.result||[]); g.onerror=()=>rej(g.error); }); }
+async function putAllPackFiles(recs){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(PACK_STORE,'readwrite'); (recs||[]).forEach(r=>tx.objectStore(PACK_STORE).put(r)); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
 // 内存缓存：图片 id -> dataUrl，渲染时同步取（避免把渲染函数改成异步）
 const _imgCache = new Map();
 async function loadImages(ids){
@@ -1206,14 +1235,19 @@ async function persistTempImages(){
     }
   }
 }
-// 保存后清理 IndexedDB 中不再被任何产品引用的图片记录（防残留膨胀）
+// 保存后清理 IndexedDB 中不再被任何产品引用的图片 / 包装文件记录（防残留膨胀）
 async function gcImages(){
   try{
     const used = new Set();
-    (DB.products||[]).forEach(p=>(p.images||[]).forEach(id=>{ if(typeof id==='string' && !id.startsWith('data:')) used.add(id); }));
-    const all = await getAllImages();
-    const garbage = all.filter(r=>r && r.id && !used.has(r.id)).map(r=>r.id);
-    if(garbage.length) await Promise.all(garbage.map(id=>delImage(id).catch(()=>{})));
+    (DB.products||[]).forEach(p=>{
+      (p.images||[]).forEach(id=>{ if(typeof id==='string' && !id.startsWith('data:')) used.add(id); });
+      (p.pack && p.pack.files||[]).forEach(f=>{ if(f && typeof f.id==='string' && f.id.startsWith('pf_')) used.add(f.id); });
+    });
+    const [allImg, allPack] = await Promise.all([getAllImages(), getAllPackFiles()]);
+    const g1 = allImg.filter(r=>r && r.id && !used.has(r.id)).map(r=>r.id);
+    const g2 = allPack.filter(r=>r && r.id && !used.has(r.id)).map(r=>r.id);
+    if(g1.length) await Promise.all(g1.map(id=>delImage(id).catch(()=>{})));
+    if(g2.length) await Promise.all(g2.map(id=>delPackFile(id).catch(()=>{})));
   }catch(e){}
 }
 // 旧版本 base64 图片自动迁移到 IndexedDB（首次打开新版本时执行一次）
@@ -1235,6 +1269,29 @@ async function migrateOldImages(){
     }
     if(changed){ try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){} }
   }catch(e){ console.warn('旧图片迁移失败', e); }
+}
+// 旧版本 pack 文件迁移：历史上 dataUrl 内嵌在 localStorage（受 1.2MB 限制）；
+// 现统一搬入 IndexedDB packfiles store，DB 的 pack.files 只留 meta。对超限仅登记名
+// 称（无 dataUrl）的文件无法找回实体，保留 meta 并标记，待用户重新上传。
+async function migrateOldPackFiles(){
+  try{
+    let changed=false;
+    for(const p of DB.products||[]){
+      const files = (p.pack && p.pack.files) || [];
+      for(const f of files){
+        if(!f || typeof f.id!=='string') continue;
+        if(typeof f.dataUrl==='string' && f.dataUrl.startsWith('data:')){
+          if(!f.id.startsWith('pf_')) f.id = 'pf_' + f.id;      // 确保新命名空间
+          await putPackFile({ id:f.id, dataUrl:f.dataUrl, at:Date.now() }).catch(()=>{});
+          delete f.dataUrl;                                     // 剥离实体，DB 只剩 meta
+          changed=true;
+        } else if(!f.dataUrl){
+          delete f.dataUrl;                                     // 旧“仅登记”条目无实体，去掉空字段
+        }
+      }
+    }
+    if(changed){ try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){} }
+  }catch(e){ console.warn('旧包装文件迁移失败', e); }
 }
 
 // 旧数据迁移：原模型产品为「全局目录」，客户用 rules[pid] 引用并覆盖 clientSku/price/config。
@@ -1309,6 +1366,7 @@ function switchTab(t){
 }
 function closeModal(id){
   try{
+    if(id === 'packPreviewMask'){ const h=document.getElementById('packPreviewHost'); if(h) h.innerHTML=''; if(_packPreviewUrl){ try{ URL.revokeObjectURL(_packPreviewUrl); }catch(e){} _packPreviewUrl=''; } }
     const mask = document.getElementById(id);
     if(mask){
       mask.classList.remove('show', 'rmode');
@@ -1337,6 +1395,62 @@ function closeImagePreview(){
   if(m) m.classList.remove('show');
   const img = document.getElementById('imgPreviewSrc');
   if(img) img.src = '';
+}
+// 包装文件预览：可预览类型（图片 / PDF）用 object URL 内嵌展示，无需下载
+let _packPreviewUrl = '';
+function dataUrlToBlobUrl(dataUrl){
+  const parts = dataUrl.split(',');
+  const meta = (parts[0]||'').match(/^data:([^;]*)/);
+  const mime = meta ? meta[1] : 'application/octet-stream';
+  const bin = atob(parts[1]||'');
+  const u8 = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+  return URL.createObjectURL(new Blob([u8], {type:mime}));
+}
+// 判断文件是否可用浏览器内嵌预览（仅当类型可确定时）
+function canPreviewPack(f){
+  if(!f) return false;
+  const n = String(f.name||'').toLowerCase();
+  const t = String(f.type||'').toLowerCase();
+  if(t.startsWith('image/')) return true;
+  if(t === 'application/pdf') return true;
+  if(/\.(png|jpe?g|gif|webp|bmp|avif|pdf)$/.test(n)) return true;
+  return false;
+}
+function closePackPreview(){
+  const m = document.getElementById('packPreviewMask');
+  if(m) m.classList.remove('show');
+  const host = document.getElementById('packPreviewHost');
+  if(host) host.innerHTML='';
+  if(_packPreviewUrl){ try{ URL.revokeObjectURL(_packPreviewUrl); }catch(e){} _packPreviewUrl=''; }
+}
+async function previewPackFile(id, name){
+  try{
+    const rec = await getPackFile(id);
+    if(!rec || !rec.dataUrl){ toast('该文件未保存实体，无法预览', 2500); return; }
+    const host = document.getElementById('packPreviewHost');
+    const nm = document.getElementById('packPreviewName');
+    if(nm) nm.textContent = name || id;
+    if(_packPreviewUrl){ try{ URL.revokeObjectURL(_packPreviewUrl); }catch(e){} _packPreviewUrl=''; }
+    const url = dataUrlToBlobUrl(rec.dataUrl);
+    _packPreviewUrl = url;
+    // 依据 MIME / 文件名区分：图片用 <img>，PDF 用 <iframe>，其余不支持预览
+    const n = String(name||'').toLowerCase();
+    const t = String(rec.type || (rec.dataUrl.match(/^data:([^;]*)/)||[])[1] || '').toLowerCase();
+    let inner;
+    if(t.startsWith('image/') || /\.(png|jpe?g|gif|webp|bmp|avif)$/.test(n)){
+      inner = `<img src="${url}" alt="预览">`;
+    } else if(t === 'application/pdf' || n.endsWith('.pdf')){
+      inner = `<iframe src="${url}" title="PDF 预览"></iframe>`;
+    } else {
+      toast('该格式暂不支持直接预览，请使用下载后用专业软件打开', 2600);
+      URL.revokeObjectURL(url); _packPreviewUrl='';
+      return;
+    }
+    host.innerHTML = inner;
+    const m = document.getElementById('packPreviewMask');
+    if(m) m.classList.add('show');
+  }catch(e){ toast('预览失败：' + (e&&e.message||e), 2600); }
 }
 /* 双保险：用 JS 直接绑定关闭/保存/取消，绕过 inline onclick，确保任何情况下按钮都能响应 */
 function bindProductModalButtons(){
@@ -2058,7 +2172,7 @@ function batchAddToQuote(){
       price: parseFloat(p.price) || 0,
       qty: 1,
       currency: sym,
-      pack: JSON.parse(JSON.stringify(p.pack || emptyPack())),
+      pack: stripPackData(p.pack || emptyPack()),
       hsCode: p.hsCode || '',
       certifications: (p.certifications||[]).slice(),
       moq: p.moq || 0,
@@ -2446,7 +2560,16 @@ function removeConfig(i){ _tempConfigs.splice(i,1); _cfgSel=null; renderConfigEd
 // ============ 包装（pack）============
 /* 结构化的包装字段：后续要加「托盘数/箱唛/条码/内盒数」等，只要在 emptyPack() 里
    加一个默认值、在包装栏 HTML 里加一个输入框、在 readPackForm/fillPackForm 里加一行即可 */
-const PACK_MAX_EMBED = 1.2 * 1024 * 1024;   // 单文件内嵌上限（超出只登记文件名）
+const PACK_MAX_SIZE = 200 * 1024 * 1024;   // 单文件体积上限（超出仅登记文件名，防浏览器卡死）
+// 深拷贝 pack 且剥离 files 中内嵌 dataUrl（DB/快照只存 meta，实体在 IndexedDB）
+function stripPackData(pack){
+  const p = JSON.parse(JSON.stringify(pack || {}));
+  if(Array.isArray(p.files)) p.files = p.files.map(f=>{
+    if(!f || typeof f!=='object') return f;
+    return { id:f.id, name:f.name, size:f.size, type:f.type, time:f.time };
+  }).filter(Boolean);
+  return p;
+}
 function emptyPack(){
   return {
     files: [],            // 包装设计文件 [{id,name,size,type,time,dataUrl}]
@@ -2476,39 +2599,74 @@ function addPackFiles(ev){
 }
 function addPackFile(f){
   if(!_tempPack.files) _tempPack.files=[];
-  const meta={id:uid(), name:f.name, size:f.size, type:f.type||'', time:Date.now(), dataUrl:null};
-  if(f.size<=PACK_MAX_EMBED){
-    const rd=new FileReader();
-    rd.onload=e=>{ meta.dataUrl=e.target.result; _tempPack.files.push(meta); renderPackFiles(); };
-    rd.onerror=()=>{ _tempPack.files.push(meta); renderPackFiles(); };
-    rd.readAsDataURL(f);
-  }else{
-    _tempPack.files.push(meta);
+  if(f.size > PACK_MAX_SIZE){
+    toast(`「${f.name}」超过 200MB，仅登记文件名未保存`, 4000);
+    _tempPack.files.push({id:uid(), name:f.name, size:f.size, type:f.type||'', time:Date.now(), missing:true});
     renderPackFiles();
-    toast(`「${f.name}」超过 1.2MB，仅登记文件名未内嵌`, 3500);
+    return;
   }
+  const rd=new FileReader();
+  rd.onload=async e=>{
+    const id = 'pf_' + uid();
+    const dataUrl = e.target.result;
+    // 立即写入 IndexedDB packfiles store（文件实体不占 localStorage）
+    await putPackFile({ id, dataUrl, name:f.name, size:f.size, type:f.type||'', time:Date.now() }).catch(()=>{});
+    _tempPack.files.push({ id, name:f.name, size:f.size, type:f.type||'', time:Date.now() });
+    renderPackFiles();
+  };
+  rd.onerror=()=>{ toast('读取文件失败：'+f.name, 3000); };
+  rd.readAsDataURL(f);
 }
 function removePackFile(id){
   if(!confirm('从包装栏移除该文件？')) return;
   _tempPack.files=(_tempPack.files||[]).filter(f=>f.id!==id);
+  if(id && id.startsWith('pf_')) delPackFile(id).catch(()=>{});   // 同步清理 IndexedDB 实体
   renderPackFiles();
 }
-function renderPackFiles(){
+// 下载包装文件：实体在 IndexedDB，点击时异步取出并触发浏览器下载
+async function downloadPackFile(id, name){
+  try{
+    const rec = await getPackFile(id);
+    if(!rec || !rec.dataUrl){ toast('该文件未保存实体（历史版本仅登记名称），请重新上传', 3000); return; }
+    const a=document.createElement('a');
+    a.href = rec.dataUrl;
+    a.download = name || ('pack_' + id);
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast('已开始下载：' + (name||id), 1600);
+  }catch(e){ toast('下载失败：' + (e&&e.message||e), 3000); }
+}
+async function renderPackFiles(){
   const box=document.getElementById('packFiles');
   if(!box) return;
   const list=_tempPack.files||[];
   if(!list.length){ box.innerHTML=''; return; }
-  box.innerHTML=list.map(f=>{
-    const kb=(f.size/1024).toFixed(0)+'KB';
-    const act=f.dataUrl
-      ? `<a href="${f.dataUrl}" download="${esc(f.name)}">下载</a>`
-      : `<span style="color:var(--warn)" title="文件大于 1.2MB，未存进本地数据">未内嵌</span>`;
+  box.innerHTML=list.map((f,i)=>{
+    const kb=((f.size||0)/1024).toFixed(0)+'KB';
     const ext=(f.name.split('.').pop()||'').toUpperCase();
-    return `<div class="pack-file ${f.dataUrl?'':'nostore'}" title="${esc(f.name)}">
+    return `<div class="pack-file" title="${esc(f.name)}">
       <span style="font-size:11px;background:var(--info-bg);color:var(--info-text);border:1px solid var(--info-line);padding:1px 5px;border-radius:var(--r-sm)">${esc(ext||'文件')}</span>
-      <span class="fn">${esc(f.name)}</span><span class="fs">${kb}</span>${act}
+      <span class="fn">${esc(f.name)}</span><span class="fs">${kb}</span>
+      <span class="act" data-role="pack-dl" data-i="${i}"><span style="color:var(--muted)">…</span></span>
       <span class="x" onclick="removePackFile('${f.id}')">×</span></div>`;
   }).join('');
+  void hydratePackFileStatus(box, list);
+}
+// 逐个文件检查 IndexedDB 是否有实体：有→按类型给「预览/下载」；无→标黄提示未保存
+async function hydratePackFileStatus(box, list){
+  for(let i=0;i<list.length;i++){
+    const f=list[i];
+    const el=box.querySelector(`[data-role="pack-dl"][data-i="${i}"]`);
+    if(!el) continue;
+    const rec = await getPackFile(f.id).catch(()=>null);
+    if(rec && rec.dataUrl){
+      const nm = String(f.name||id).replace(/'/g,"\\'");
+      const dl = `<a href="javascript:void(0)" onclick="downloadPackFile('${f.id}','${nm}')">下载</a>`;
+      const pv = canPreviewPack(f)
+        ? `<a href="javascript:void(0)" onclick="previewPackFile('${f.id}','${nm}')" style="margin-right:8px">预览</a>` : '';
+      el.innerHTML = pv + dl;
+    }
+    else { el.innerHTML=`<span style="color:var(--warn)" title="文件实体未在本地 IndexedDB（历史仅登记或未保存成功）">未保存</span>`; }
+  }
 }
 function readPackForm(){
   const g=id=>document.getElementById(id);
@@ -2521,7 +2679,7 @@ function readPackForm(){
 function fillPackForm(pk){
   const g=id=>document.getElementById(id);
   pk=pk||emptyPack();
-  _tempPack=JSON.parse(JSON.stringify(pk));
+  _tempPack=stripPackData(pk);
   if(!Array.isArray(_tempPack.files)) _tempPack.files=[];
   PK_NUM_KEYS.forEach(k=>{ const e=g(pkElId(k)); if(e) e.value=_tempPack[k]||''; });
   PK_TXT_KEYS.forEach(k=>{ const e=g(pkElId(k)); if(e) e.value=_tempPack[k]||''; });
@@ -2671,7 +2829,7 @@ function openProductModal(id, presetCid){
     document.getElementById('pSampleAvailable').checked = !!(p.sampleAvailable);
     _initPrice = String(document.getElementById('pPrice').value);
     _initCost = String(document.getElementById('pCost').value);
-    _tempPack = JSON.parse(JSON.stringify(p.pack||emptyPack()));
+    _tempPack = stripPackData(p.pack||emptyPack());
   } else {
     t.textContent = '新增产品';
     document.getElementById('pId').value='';
@@ -2792,6 +2950,9 @@ function deleteProduct(id){
   const label = p.name || p.code;
   const cname = c ? c.name : '';
   if(!confirm(`确认删除产品「${label}」？\n\n仅从客户「${cname}」下移除，不影响其他客户（已保存的历史报价为快照，保留）。`)) return false;
+  // 清理该产品的图片与包装文件实体（IndexedDB）
+  (p.images||[]).forEach(imgId=>{ if(typeof imgId==='string' && imgId.startsWith('img_')) delImage(imgId).catch(()=>{}); });
+  ((p.pack&&p.pack.files)||[]).forEach(f=>{ if(f && typeof f.id==='string' && f.id.startsWith('pf_')) delPackFile(f.id).catch(()=>{}); });
   DB.products = DB.products.filter(x=>x.id!==id);
   save();
   renderProducts(); renderCustomers();
@@ -3748,8 +3909,8 @@ function downloadTemplate(){
 // ============ 数据导入导出 ============
 async function exportData(){
   try{
-    const images = await getAllImages();
-    const payload = { _format:'product-library-backup-v2', db: DB, images: images };
+    const [images, packFiles] = await Promise.all([getAllImages(), getAllPackFiles()]);
+    const payload = { _format:'product-library-backup-v2', db: DB, images: images, packFiles: packFiles };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -3768,9 +3929,9 @@ async function importData(ev){
       if(!d.products) throw new Error('格式错误');
       if(!confirm('导入将覆盖当前数据，确认继续？\n（覆盖前会自动留存一份「保护快照」，可随时从「恢复自动备份」找回）')) return;
       await snapshotBeforeDestructive();   // 覆盖前先留快照（含图片）
-      // 新格式备份：{_format, db, images}；旧格式：直接是 DB 结构
-      let dbPayload, imgPayload = [];
-      if(d && d._format && d.db){ dbPayload = d.db; imgPayload = d.images || []; }
+      // 新格式备份：{_format, db, images, packFiles}；旧格式：直接是 DB 结构
+      let dbPayload, imgPayload = [], packPayload = [];
+      if(d && d._format && d.db){ dbPayload = d.db; imgPayload = d.images || []; packPayload = d.packFiles || []; }
       else { dbPayload = d; }
       // 兼容旧备份：products[].images 仍是 base64，则迁移为 IndexedDB 记录
       if(dbPayload.products){
@@ -3786,9 +3947,19 @@ async function importData(ev){
             }
             p.images=newIds;
           }
+          // 兼容旧备份：pack.files 内嵌 dataUrl → 迁入 IndexedDB，DB 只留 meta
+          const pfiles = (p.pack && p.pack.files) || [];
+          for(const f of pfiles){
+            if(f && typeof f.dataUrl==='string' && f.dataUrl.startsWith('data:')){
+              if(!f.id.startsWith('pf_')) f.id='pf_'+f.id;
+              await putPackFile({id:f.id, dataUrl:f.dataUrl, at:Date.now()}).catch(()=>{});
+              delete f.dataUrl;
+            } else if(f && !f.dataUrl){ delete f.dataUrl; }
+          }
         }
       }
       if(imgPayload.length) await putAllImages(imgPayload).catch(()=>{});   // 回写图片
+      if(packPayload.length) await putAllPackFiles(packPayload).catch(()=>{});   // 回写包装文件
       // 合并：以导入文件为准，但缺字段（如只有产品、没有客户/类型）时保留当前值，避免误清空
       const merged = Object.assign({types:[],products:[],customers:[]}, dbPayload);
       if(!dbPayload.types && DB.types && DB.types.length) merged.types = DB.types;
@@ -3796,6 +3967,7 @@ async function importData(ev){
       DB = merged;
       migrateDB();   // 兼容旧备份：把全局产品/规则折叠为按客户隔离
       save(); renderProducts(); renderCustomers(); renderQuoteSelectors(); toast('导入成功');
+      gcImages().catch(()=>{});   // 清理导入后不再被引用的旧图片/包装文件实体
     }catch(err){ toast('导入失败：文件格式错误'); }
   };
   reader.readAsText(file);
@@ -3819,7 +3991,11 @@ try{
   migrateDB();
   save();
   // 旧 base64 图片自动迁移到 IndexedDB（仅首次打开新版本、且存在旧数据时发生）
-  migrateOldImages().then(()=>{ try{ renderProducts(); renderCustomers(); }catch(e){} }).catch(()=>{});
+  migrateOldImages().then(async ()=>{
+    // 旧 pack 文件 dataUrl 内嵌数据迁移到 IndexedDB（与图片迁移同步执行，互不阻塞）
+    try{ await migrateOldPackFiles(); }catch(e){ console.warn('旧包装文件迁移失败', e); }
+    try{ renderProducts(); renderCustomers(); }catch(e){}
+  }).catch(()=>{});
 }catch(err){ console.error('数据初始化失败（不影响弹窗开关）', err); }
 if(dataCorrupted) toast('检测到本地数据异常，可在左下「恢复自动备份」中还原', 3500);
 else { const emptyNow = (!DB.customers.length && !DB.products.length); if(emptyNow && !firstRun) toast('当前浏览器未检测到客户/产品数据，可在左下「恢复自动备份」或「导入数据」还原', 4000); }
@@ -4558,12 +4734,15 @@ try{ refreshBakInfo(); }catch(err){}
       const newHashes = {};
       if(cfg.includeImages){
         const imgs = await getAllImages();
-        syncLog('图片：本地共 ' + imgs.length + ' 张');
+        const pcks = await getAllPackFiles();
+        const all = imgs.concat(pcks);
+        syncLog('附件：本地共 ' + imgs.length + ' 图 + ' + pcks.length + ' 包装文件');
         const remoteLatest = await fetchLatest().catch(()=>null);
         const remoteImgs = (remoteLatest && remoteLatest.imageMap) || {};
         let i = 0;
-        for(const rec of imgs){
-          i++; setProgress(0.2 + 0.5*(i/Math.max(1,imgs.length)));
+        for(const rec of all){
+          if(!rec || !rec.dataUrl) continue;
+          i++; setProgress(0.2 + 0.5*(i/Math.max(1,all.length)));
           const hash = await hashDataUrl(rec.dataUrl);
           newHashes[rec.id] = hash;
           if(imgHashOf(remoteImgs[rec.id]) === hash) continue;
@@ -4571,7 +4750,7 @@ try{ refreshBakInfo(); }catch(err){}
           if(await headExists(key)) continue;
           const blob = await encryptJSON({id:rec.id, hash, dataUrl:rec.dataUrl}, passphrase, saltB64);
           const r = await s3Request(cfg, 'PUT', key, JSON.stringify(blob), {'Content-Type':'application/json'});
-          if(!r.ok) throw new Error('图片上传失败 ' + rec.id + ' HTTP ' + r.status);
+          if(!r.ok) throw new Error('附件上传失败 ' + rec.id + ' HTTP ' + r.status);
         }
       }
       setProgress(0.75);
@@ -4611,10 +4790,11 @@ try{ refreshBakInfo(); }catch(err){}
       const snap = await decryptJSON(encSnap, passphrase);
       setProgress(0.5);
       if(cfg.includeImages && latest.imageMap){
-        const have = new Set((await getAllImages()).map(r=>r.id));
+        const [imgs, pcks] = await Promise.all([getAllImages(), getAllPackFiles()]);
+        const have = new Set(imgs.map(r=>r.id).concat(pcks.map(r=>r.id)));
         const remote = latest.imageMap;
         const want = Object.keys(remote).filter(id => !have.has(id));
-        syncLog('图片：补齐 ' + want.length + ' 张');
+        syncLog('附件：补齐 ' + want.length + ' 项（图片/包装文件）');
         let i = 0;
         for(const id of want){
           i++; setProgress(0.5 + 0.4*(i/Math.max(1,want.length)));
@@ -4623,7 +4803,12 @@ try{ refreshBakInfo(); }catch(err){}
           if(!r.ok) continue;
           const enc = await r.json();
           const dec = await decryptJSON(enc, passphrase);
-          await putImage({id, dataUrl: dec.dataUrl, at: Date.now()}).catch(()=>{});
+          if(!dec || !dec.dataUrl) continue;
+          if(id && id.startsWith('pf_')){
+            await putPackFile({id, dataUrl: dec.dataUrl, at: Date.now()}).catch(()=>{});
+          } else {
+            await putImage({id, dataUrl: dec.dataUrl, at: Date.now()}).catch(()=>{});
+          }
         }
       }
       setProgress(0.95);
