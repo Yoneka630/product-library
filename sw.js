@@ -5,7 +5,7 @@
  * - Sync (S3) is intentionally NOT cached: the app talks to S3 directly so
  *   data is always live; only static app assets are cached here.
  */
-const CACHE_VERSION = 'v2026.10.07';                 // ← deploy.mjs 会自动 bump
+const CACHE_VERSION = 'v2026.10.09';                 // ← deploy.mjs 会自动 bump
 const APP_SHELL = [
   './',
   './index.html',

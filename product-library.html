@@ -489,7 +489,7 @@
     <div class="brand" data-page-node-id="MAYRjmz2R94fupFbdijC1C">
       <div class="logo" data-page-node-id="QNnUylgUKmDlDlgKJO3JMX">锁</div>
       <div data-page-node-id="Vt43R8ON0dGcKN3ANHBr8q">
-        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.07</small></h1>
+        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.09</small></h1>
       </div>
     </div>
 
@@ -697,7 +697,7 @@
     </div>
 
     <div class="card" data-page-node-id="xUFxdNPAHUDGmLLVu8Ofsx">
-      <h2 data-page-node-id="iJKzrCqIao767JJSqfXXdd">同步地址</h2>
+      <h2 data-page-node-id="iJKzrCqIao767JJSqfXXdd">同步地址 <span style="color:#c2410c;font-weight:normal;font-size:12px" data-page-node-id="MxMXxcU7sR9WAwaJzrX1U0">（Endpoint 必须 HTTPS —— 否则在 HTTPS 页面（GitHub Pages / 部署站）会被浏览器拦截 Mixed Content）</span></h2>
       <div class="sync-grid" data-page-node-id="yFEOdjeJES6cDJcpJVOYpV">
         <div class="field" data-page-node-id="htTUN1rwuKZBWrbVjkBOok"><label data-page-node-id="6JCGrq2kdf4C6aQxrBM2YN">Endpoint</label><input id="syncEndpoint" placeholder="https://s3.cn-south-1.qiniucs.com" onchange="onSyncCfgChange()" data-page-node-id="Ktt5NgWDAQE2fJYocFoG3k"></div>
         <div class="field" data-page-node-id="Hv768PFrK1c2Na12HtNddu"><label data-page-node-id="XTR9LYHrRWKGOmxAsuKHH6">Region</label><input id="syncRegion" placeholder="cn-south-1" onchange="onSyncCfgChange()" data-page-node-id="O8G7lBJPtdrcVoTdP5OCpn"></div>
@@ -768,8 +768,10 @@
   <div class="panel" id="panel-system">
     <div class="card">
       <h2>系统版本 <span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:6px">更新记录</span></h2>
-      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.07</span></div>
+      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.09</span></div>
       <ul class="changelog-list">
+        <li><b>修复新设备下载后产品图裂开</b>：根因是 S3 同步的 <code>latest.json</code> 里 <code>imageMap</code> 格式不一致——上传端写入的是裸 hash 字符串 <code>imgId→hash</code>，而下载端按对象 <code>remote[id].hash</code> 读取，读到 undefined 导致请求 <code>images/undefined.enc</code>、图片全下载失败。新增兼容助手 <code>imgHashOf()</code> 统一取 hash（兼容旧字符串与新 <code>{hash}</code> 两种格式），上传跳检与下载三处一并修正，新旧云端数据均可正确下载图片。</li>
+        <li><b>同步面板增加 HTTPS / Mixed Content 拦截守卫</b>：「同步地址」标题加红字提示「Endpoint 必须 HTTPS」（HTTPS 页面下用 http:// 会被浏览器拦截 Mixed Content）；onSyncCfgChange 检测到 HTTPS 页面下 endpoint 以 http:// 开头时弹 toast 提醒，避免 GitHub Pages 等 HTTPS 部署下同步静默失败。</li>
         <li><b>同步配置导出 / 导入</b>：同步区新增「⤓ 导出配置 / ⤒ 导入配置」按钮，将 S3 同步设置打包为 JSON（参考思源笔记 S3 同步）：含 Endpoint / Region / Bucket / Addressing / AccessKey（明文）及加密的 SecretKey / 口令 blob；另一设备导入后输入相同加密口令即可解锁，免重填大部分配置。</li>
         <li><b>修复同步时间显示为 UTC（慢 8 小时）</b>：同步日志、状态徽章、上次同步时间统一改为北京时间（UTC+8），新增 fmtBeijing() 助手格式化所有同步时间。</li>
         <li><b>新增「系统版本」导航入口</b>：将版本更新记录从产品库底部独立成面板，便于随时查看每次修改事项。</li>
@@ -3960,6 +3962,13 @@ try{ refreshBakInfo(); }catch(err){}
     for(let i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
     return sha256Hex(buf);
   }
+  // 兼容两种 imageMap 值格式：旧版存裸 hash 字符串，新代码本意是 {hash}。
+  // 统一在此取 hash，避免 download 端 remote[id].hash 读到 undefined 导致图片下载成坏图。
+  function imgHashOf(entry){
+    if(entry == null) return '';
+    if(typeof entry === 'string') return entry;          // 旧格式：裸 hash
+    return entry && entry.hash ? entry.hash : '';        // 新格式：{hash}
+  }
 
   function nowAmz(){
     const d = new Date();
@@ -4162,6 +4171,10 @@ try{ refreshBakInfo(); }catch(err){}
   }
   async function onSyncCfgChange(){
     collectCfgFromUI();
+    // 在 HTTPS 页面（如 GitHub Pages）使用 http:// endpoint 会被浏览器拦截 Mixed Content
+    if(typeof location !== 'undefined' && location.protocol === 'https:' && /^http:\/\//i.test(cfg.endpoint||'')){
+      toast('Endpoint 必须 HTTPS，否则在 HTTPS 页面会被浏览器拦截', 3200);
+    }
     const newSecret = (getVal('syncSecretKey')||'').trim();
     const newPass = (getVal('syncPassphrase')||'').trim();
     if(newSecret){
@@ -4553,7 +4566,7 @@ try{ refreshBakInfo(); }catch(err){}
           i++; setProgress(0.2 + 0.5*(i/Math.max(1,imgs.length)));
           const hash = await hashDataUrl(rec.dataUrl);
           newHashes[rec.id] = hash;
-          if(remoteImgs[rec.id] && remoteImgs[rec.id].hash === hash) continue;
+          if(imgHashOf(remoteImgs[rec.id]) === hash) continue;
           const key = cfg.prefix + 'images/' + hash + '.enc';
           if(await headExists(key)) continue;
           const blob = await encryptJSON({id:rec.id, hash, dataUrl:rec.dataUrl}, passphrase, saltB64);
@@ -4605,7 +4618,7 @@ try{ refreshBakInfo(); }catch(err){}
         let i = 0;
         for(const id of want){
           i++; setProgress(0.5 + 0.4*(i/Math.max(1,want.length)));
-          const key = cfg.prefix + 'images/' + remote[id].hash + '.enc';
+          const key = cfg.prefix + 'images/' + imgHashOf(remote[id]) + '.enc';
           const r = await s3Request(cfg, 'GET', key);
           if(!r.ok) continue;
           const enc = await r.json();
