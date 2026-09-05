@@ -489,7 +489,7 @@
     <div class="brand" data-page-node-id="MAYRjmz2R94fupFbdijC1C">
       <div class="logo" data-page-node-id="QNnUylgUKmDlDlgKJO3JMX">锁</div>
       <div data-page-node-id="Vt43R8ON0dGcKN3ANHBr8q">
-        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.06</small></h1>
+        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.07</small></h1>
       </div>
     </div>
 
@@ -690,7 +690,10 @@
         <button class="btn" onclick="syncTestConnection()" data-page-node-id="C4ktPjyO3HwhN4hH2it85l">测试连接</button>
         <button class="btn" id="syncAutoRegionBtn" onclick="syncAutoDetectRegion()" title="不确定桶在哪个区域时，点此自动遍历七牛各区域并回填正确配置">🔍 自动探测区域</button>
         <button class="btn" onclick="syncClearConfig()" data-page-node-id="yIMYDZXE7KdtZvy6Pe1DcL">清除同步配置</button>
+        <button class="btn" onclick="exportSyncConfig()">⤓ 导出配置</button>
+        <button class="btn" onclick="importSyncConfigFromFile()">⤒ 导入配置</button>
       </div>
+      <input type="file" id="syncImportFile" accept=".json,application/json" style="display:none" onchange="onSyncImportFile(this)">
     </div>
 
     <div class="card" data-page-node-id="xUFxdNPAHUDGmLLVu8Ofsx">
@@ -765,8 +768,9 @@
   <div class="panel" id="panel-system">
     <div class="card">
       <h2>系统版本 <span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:6px">更新记录</span></h2>
-      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.06</span></div>
+      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.07</span></div>
       <ul class="changelog-list">
+        <li><b>同步配置导出 / 导入</b>：同步区新增「⤓ 导出配置 / ⤒ 导入配置」按钮，将 S3 同步设置打包为 JSON（参考思源笔记 S3 同步）：含 Endpoint / Region / Bucket / Addressing / AccessKey（明文）及加密的 SecretKey / 口令 blob；另一设备导入后输入相同加密口令即可解锁，免重填大部分配置。</li>
         <li><b>修复同步时间显示为 UTC（慢 8 小时）</b>：同步日志、状态徽章、上次同步时间统一改为北京时间（UTC+8），新增 fmtBeijing() 助手格式化所有同步时间。</li>
         <li><b>新增「系统版本」导航入口</b>：将版本更新记录从产品库底部独立成面板，便于随时查看每次修改事项。</li>
         <li>已合并优化预览（分页/排序/时间戳/金额格式化）并补充外贸标准字段（HS 编码/认证/MOQ/交期/原产国/销售单位/可样品）。</li>
@@ -4400,6 +4404,71 @@ try{ refreshBakInfo(); }catch(err){}
       if(!sk){ toast('口令错误', 2000); _cachedPass=''; }
       else toast('已解锁，可执行同步', 1800);
     }catch(e){ toast('口令错误', 2000); _cachedPass=''; }
+  };
+
+  // ===== 导出 / 导入 S3 同步配置（参考思源笔记 S3 同步）=====
+  const SYNC_EXPORT_FIELDS = ['enabled','endpoint','region','bucket','prefix','addressing','timeoutSec',
+    'accessKey','secretKeyEnc','passphraseEnc','wrapSalt','mode','intervalMin','debounceMin',
+    'maxRetry','retryBackoffSec','conflict','includeProducts','includeCustomers','includeTypes',
+    'includeImages','includeQuoteDraft'];
+
+  window.exportSyncConfig = function(){
+    try{
+      collectCfgFromUI();
+      const config = {};
+      for(const k of SYNC_EXPORT_FIELDS){ if(k in cfg) config[k] = cfg[k]; }
+      const payload = {
+        app: 'product-library',
+        name: '产品库 S3 同步配置',
+        schema: SYNC_SCHEMA,
+        type: 's3-sync-config',
+        exportedAt: (typeof fmtBeijing==='function' ? fmtBeijing(new Date()) : new Date().toLocaleString()),
+        note: 'AccessKey 为明文；SecretKey 与加密口令以加密 blob 形式导出，导入后在另一设备输入相同加密口令即可解锁，无需重填 SecretKey。',
+        config
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'product-library-sync-config-' + new Date().toISOString().slice(0,10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){ if(a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); }, 500);
+      syncLog('已导出同步配置 JSON');
+      toast('同步配置已导出', 1800);
+    }catch(e){ console.error(e); toast('导出失败：' + (e && e.message ? e.message : e), 2600); }
+  };
+
+  window.importSyncConfigFromFile = function(){
+    const inp = document.getElementById('syncImportFile');
+    if(inp) inp.click();
+  };
+
+  window.onSyncImportFile = async function(input){
+    const file = input && input.files && input.files[0];
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const obj = JSON.parse(text);
+      const config = obj && (obj.config || obj);
+      if(!config || typeof config!=='object') throw new Error('文件格式不正确');
+      if(obj.type && obj.type!=='s3-sync-config') throw new Error('不是产品库同步配置文件');
+      const merged = Object.assign({}, cfg);
+      for(const k of SYNC_EXPORT_FIELDS){ if(k in config) merged[k] = config[k]; }
+      cfg = merged;
+      saveCfg();
+      fillCfgToUI();
+      syncRefreshUI();
+      scheduleAuto();
+      const hasEnc = !!(cfg.secretKeyEnc && cfg.passphraseEnc);
+      syncLog('已导入同步配置（' + (cfg.endpoint || '未设置 Endpoint') + (hasEnc ? '，含加密密钥' : '') + '）');
+      toast('同步配置已导入' + (hasEnc ? '，首次同步时输入加密口令即可解锁' : '，请补全 SecretKey 与加密口令'), 2800);
+    }catch(e){
+      console.error(e);
+      toast('导入失败：' + (e && e.message ? e.message : e), 2800);
+    }finally{
+      if(input) input.value = '';
+    }
   };
 
   async function prepareSecrets(){
