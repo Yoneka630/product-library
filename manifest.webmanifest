@@ -2,7 +2,7 @@
   "name": "产品库",
   "short_name": "产品库",
   "description": "汽车锁具外贸单文件离线 CRM，支持多端 S3 加密同步",
-  "start_url": "./product-library.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
@@ -17,12 +17,12 @@
   "shortcuts": [
     {
       "name": "新建产品",
-      "url": "./product-library.html#newProduct",
+      "url": "./#newProduct",
       "description": "快速新增产品"
     },
     {
       "name": "新建客户",
-      "url": "./product-library.html#newCustomer",
+      "url": "./#newCustomer",
       "description": "快速新增客户"
     }
   ]

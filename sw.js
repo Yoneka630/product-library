@@ -8,6 +8,7 @@
 const CACHE_VERSION = 'v2026.10.06';                 // ← deploy.mjs 会自动 bump
 const APP_SHELL = [
   './',
+  './index.html',
   './product-library.html',
   './manifest.webmanifest',
   './icon-192.png',
