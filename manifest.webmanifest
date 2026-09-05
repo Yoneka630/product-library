@@ -1,0 +1,29 @@
+{
+  "name": "产品库",
+  "short_name": "产品库",
+  "description": "汽车锁具外贸单文件离线 CRM，支持多端 S3 加密同步",
+  "start_url": "./product-library.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f1f5f9",
+  "theme_color": "#3f5f96",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["business", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "新建产品",
+      "url": "./product-library.html#newProduct",
+      "description": "快速新增产品"
+    },
+    {
+      "name": "新建客户",
+      "url": "./product-library.html#newCustomer",
+      "description": "快速新增客户"
+    }
+  ]
+}
