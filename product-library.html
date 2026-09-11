@@ -35,6 +35,7 @@
     --sel-bg:#dde5f1;                                /* 选中行 / 选中单元格 */
     --warn-bg:#fbf6ee; --warn-line:#eddcc3; --warn-text:#8a5516;
     --ok:#16a34a; --warn:#c2761c;
+    --ok-bg:#e9f7ee; --ok-line:#c6e7d2; --ok-text:#15803d;   /* 订购状态：已订购 */
     --danger:#dc2626; --danger-bg:#fef2f2; --danger-line:#fecaca;
 
     /* ── 圆角：扁平化，收敛为 2 / 3 / 4 三档（按钮 3px）── */
@@ -62,8 +63,8 @@
   select::-ms-expand{display:none}
   a{color:var(--accent)}
 
-  /* 左侧纵向导航 */
-  .app{display:flex;min-height:100vh;max-width:1400px;margin:0 auto}
+  /* 左侧纵向导航。整页铺满视口：宽屏下表格区拿到全部可用宽度，列多也不会被挤到换行 */
+  .app{display:flex;min-height:100vh;width:100%}
   .sidebar{width:190px;flex-shrink:0;background:var(--card);border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh;overflow-y:auto}
   .brand{display:flex;align-items:center;gap:10px;padding:0 4px}
   .brand .logo{width:36px;height:36px;border-radius:var(--r-md);background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0}
@@ -208,11 +209,23 @@
   .ptbl .col-cfg{width:80px;color:var(--muted);text-align:center}
   .ptbl .col-act{width:120px;white-space:nowrap}
   .ptbl .col-price{width:118px;color:var(--link);font-weight:700}   /* 加报价日期后略放宽，避免换行 */
-  .ptbl .img-cell{width:52px;height:52px;border-radius:var(--r-sm);background:var(--soft);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;color:#94a3b8;font-size:22px;margin:0 auto}
+  .ptbl .col-order{width:104px}
+  /* max-width:100% 是兜底：万一列被拖得比图片还窄，图片随格缩小并保持居中，而不是撑破单元格 */
+  .ptbl .img-cell{width:52px;max-width:100%;height:52px;border-radius:var(--r-sm);background:var(--soft);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;color:#94a3b8;font-size:22px;margin:0 auto}
   .ptbl .img-cell img{width:100%;height:100%;object-fit:contain}
   /* 产品图片：点击直接放大预览，无需额外操作 */
   .ptbl .img-cell{cursor:pointer;transition:box-shadow .12s}
   .ptbl .img-cell:hover{box-shadow:0 0 0 2px var(--brand2)}
+  /* ── 产品列表：列宽可拖拽调整（宽度记忆在 localStorage） ── */
+  /* cols-ready 才切到固定表格算法：列宽严格按设定值渲染，拖拽与记忆才能精确生效；
+     表格 min-width 由各列宽之和决定，宽于容器时交给 .tbl-wrap 横向滚动 */
+  #productTable.cols-ready{table-layout:fixed}
+  /* 表头与单元格保持完全相同的左右内边距，拖宽/拖窄后表头文字与列内数据仍严格同轴居中 */
+  .ptbl thead th[data-col]{overflow:hidden;text-overflow:ellipsis}
+  .ptbl .col-resizer{position:absolute;top:0;right:0;width:9px;height:100%;cursor:col-resize;z-index:4;touch-action:none;user-select:none}
+  .ptbl .col-resizer::before{content:'';position:absolute;top:22%;bottom:22%;left:4px;width:2px;border-radius:1px;background:transparent;transition:background .12s}
+  .ptbl .col-resizer:hover::before,.ptbl .col-resizer.active::before{background:var(--brand)}
+  body.col-resizing,body.col-resizing *{cursor:col-resize!important;user-select:none!important}
   /* 图片放大预览弹层 */
   #imgPreviewMask{align-items:center;z-index:200}
   .img-preview-box{position:relative;max-width:92vw;max-height:92vh;display:flex;align-items:center;justify-content:center}
@@ -225,7 +238,11 @@
   .pack-preview-box iframe{width:88vw;height:82vh;border:none;border-radius:var(--r-md);background:#f5f6f8}
   .pack-preview-name{position:absolute;left:0;top:0;right:0;padding:6px 12px;background:linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,0));color:#fff;font-size:12px;z-index:1;pointer-events:none}
 
-  /* ── 批量工具：查找替换（类 Excel） ── */
+  /* ── 批量工具：标签页 + 查找替换（类 Excel） ── */
+  .bt-tabs{display:flex;gap:6px;margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:8px}
+  .bt-tab{padding:6px 14px;border:1px solid var(--line-strong);background:#fff;color:var(--text-2);border-radius:var(--r-md);font-size:13px;font-weight:600;cursor:pointer}
+  .bt-tab:hover{background:var(--soft)}
+  .bt-tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
   .bt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:10px}
   .bt-actions{display:flex;align-items:center;gap:8px;margin:4px 0 8px;flex-wrap:wrap}
   .fr-result{max-height:264px;overflow:auto;border:1px solid var(--line);border-radius:var(--r-md);background:#fff}
@@ -271,6 +288,10 @@
   .ptbl .nm{font-weight:600;color:var(--text)}
   .ptbl .type-pill{display:inline-block;padding:3px 9px;border-radius:var(--r-sm);background:var(--warn-bg);color:var(--warn-text);border:1px solid var(--warn-line);font-size:11px;font-weight:600;white-space:nowrap}
   .ptbl .rule-cell{font-size:12px;color:var(--muted)}
+  /* 订购状态徽标：已订购（绿）/ 仅报价、未订购（灰） */
+  .order-pill{display:inline-block;padding:3px 9px;border-radius:var(--r-sm);font-size:11px;font-weight:600;white-space:nowrap;border:1px solid var(--line-strong);background:var(--soft);color:var(--muted)}
+  .order-pill.ok{background:var(--ok-bg);color:var(--ok-text);border-color:var(--ok-line)}
+  .order-pill.quiet{background:var(--soft);color:var(--muted);border-color:var(--line-strong)}
   .ptbl .rule-cell b{color:var(--link)}
   /* 报价日期：跟在报价下方，弱化显示（不继承报价的品牌色与加粗） */
   .ptbl .price-date{font-size:11px;font-weight:400;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
@@ -308,6 +329,17 @@
   .modal-body{padding:20px;max-height:70vh;overflow-y:auto}
   .modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
   .modal-head .head-actions{display:flex;align-items:center;gap:2px}
+
+  /* ===== 下拉选项管理弹窗（新增 / 删除）===== */
+  .opt-tip{font-size:12.5px;color:var(--muted);line-height:1.65;margin-bottom:12px}
+  .opt-list{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow-y:auto}
+  .opt-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--bg-soft,#fafbfc)}
+  .opt-row .opt-name{flex:1 1 auto;font-size:13.5px;color:var(--text);word-break:break-all}
+  .opt-row .opt-use{font-size:12px;color:var(--muted);white-space:nowrap}
+  .opt-row .opt-use.on{color:var(--brand);font-weight:600}
+  .opt-empty{padding:18px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--line-strong);border-radius:var(--r-md)}
+  .opt-add{display:flex;gap:8px;margin-top:12px}
+  .opt-add input{flex:1 1 auto;height:34px;padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-md);font-size:13px;color:var(--text);background:#fff}
 
   /* ===== 可拖拽调整尺寸的弹窗 ===== */
   .modal-mask.rmode{padding:0;overflow:hidden;display:block}
@@ -495,7 +527,7 @@
     <div class="brand" data-page-node-id="MAYRjmz2R94fupFbdijC1C">
       <div class="logo" data-page-node-id="QNnUylgUKmDlDlgKJO3JMX">锁</div>
       <div data-page-node-id="Vt43R8ON0dGcKN3ANHBr8q">
-        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.11</small></h1>
+        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.18</small></h1>
       </div>
     </div>
 
@@ -563,9 +595,12 @@
           <span class="sel-count" id="selCount" data-page-node-id="QqnypJa6p2FnURWS0T8Bul"></span>
           <button class="btn danger" id="btnBatchDelete" onclick="batchDelete()" style="display:none" data-page-node-id="IEo8I4SAcymPoxfXlucLN3">批量删除</button>
           <button class="btn primary" id="btnBatchQuote" onclick="batchAddToQuote()" style="display:none" data-page-node-id="99DO8xMYwGTxb8gkY9GBUt">🧾 批量加入报价单</button>
+          <button class="btn" id="btnBatchOrdered" onclick="batchSetOrdered(true)" style="display:none">✓ 设为已订购</button>
+          <button class="btn" id="btnBatchNotOrdered" onclick="batchSetOrdered(false)" style="display:none">↺ 设为未订购</button>
         </div>
         <div class="right" data-page-node-id="wzBxKmyP656Z86mxhg8k0R">
           <button class="btn" onclick="openBatchTools()" data-page-node-id="7djIYvDq3IoOeC9JTlhBvq">⚙ 批量工具</button>
+          <button class="btn ghost" onclick="resetAllColWidths()" title="把产品列表的列宽恢复为默认（拖表头分隔线可调整列宽，双击分隔线恢复单列）">↺ 列宽</button>
           <button class="btn primary" onclick="openProductModal()" data-page-node-id="MKYvHWtvJqbyQLKEbClAw5">+ 新增产品</button>
           <button class="btn" onclick="exportCustomer('excel')" data-page-node-id="ncuGnJETjxKEF91LzkP0bF">⬇ 导出Excel</button>
           <button class="btn" onclick="exportCustomer('pdf')" data-page-node-id="lIOwQ1bMp3RgIiVERNL1Et">⬇ 导出PDF</button>
@@ -582,17 +617,18 @@
         <table class="ptbl" id="productTable" data-page-node-id="eYgKAktdGi8FcsR93NHYDJ">
           <thead data-page-node-id="ztyfN3Me6cd9pPHPl8T6Kb">
             <tr data-page-node-id="Oe3JG1ngZvn2VVejguR45k">
-              <th class="col-chk" data-page-node-id="ju9QxuHrN9x9J9q0Wcb2jE"><input type="checkbox" id="selAll" onchange="toggleSelectAll(this.checked)" data-page-node-id="jFPFUB0IJTSVLzhfBX6ZHL"></th>
-              <th data-sort="code" class="sortable" onclick="onSort('code')" data-page-node-id="zUoqcHir9B5R1ivhQEPpWR">产品 SKU <span class="sort-arrow" data-page-node-id="v8SIFJPI5vBEeifY5efcL0"></span></th>
-              <th data-sort="clientSku" class="sortable" onclick="onSort('clientSku')" data-page-node-id="JFkAcAobnEiSI8ZinK6fYe">客户型号 <span class="sort-arrow" data-page-node-id="96PsYNfiw4jDGl9FUlihKW"></span></th>
-              <th class="col-img" data-page-node-id="7Z1uOoXlxjFAJ6RjeOgAZP">产品图</th>
-              <th data-sort="name" class="sortable" onclick="onSort('name')" data-page-node-id="md3aCEY2IjUASPs8LjWlu2">铁神型号 <span class="sort-arrow" data-page-node-id="D1U6AMzfcr62nFVrpagP9G"></span></th>
-              <th data-page-node-id="aOWWs7lSzDzRvmqMkEqJ0F">类型</th>
-              <th data-sort="price" class="sortable col-price" id="colPriceHeader" style="display:none" onclick="onSort('price')" data-page-node-id="UzOuBY0aGtp50VaEhwDsaF">报价 <span class="sort-arrow" data-page-node-id="toCDUvfX5P3LnXtRvL0eaL"></span></th>
-              <th data-sort="updatedAt" class="sortable" onclick="onSort('updatedAt')" data-page-node-id="F7qmdOCMgYRoFTCxkSVPAW">更新时间 <span class="sort-arrow" data-page-node-id="WHYhVeBZsrFB87vf5nfODH"></span></th>
-              <th data-sort="moq" class="sortable" onclick="onSort('moq')" data-page-node-id="7x8yF2YH0KQUzX5viwBtqP">MOQ <span class="sort-arrow" data-page-node-id="zIFC5KoVJMwmNPTwD4g5JH"></span></th>
-              <th data-page-node-id="bfgxmvFOY24SQK6FM9ydOQ">认证</th>
-              <th class="col-act" data-page-node-id="mHFZNidtngPxThLsvkLwBc">操作</th>
+              <th class="col-chk" data-col="chk" data-page-node-id="ju9QxuHrN9x9J9q0Wcb2jE"><input type="checkbox" id="selAll" onchange="toggleSelectAll(this.checked)" data-page-node-id="jFPFUB0IJTSVLzhfBX6ZHL"></th>
+              <th data-col="code" data-sort="code" class="sortable" onclick="onSort('code')" data-page-node-id="zUoqcHir9B5R1ivhQEPpWR">产品 SKU <span class="sort-arrow" data-page-node-id="v8SIFJPI5vBEeifY5efcL0"></span></th>
+              <th data-col="clientSku" data-sort="clientSku" class="sortable" onclick="onSort('clientSku')" data-page-node-id="JFkAcAobnEiSI8ZinK6fYe">客户型号 <span class="sort-arrow" data-page-node-id="96PsYNfiw4jDGl9FUlihKW"></span></th>
+              <th class="col-img" data-col="img" data-page-node-id="7Z1uOoXlxjFAJ6RjeOgAZP">产品图</th>
+              <th data-col="name" data-sort="name" class="sortable" onclick="onSort('name')" data-page-node-id="md3aCEY2IjUASPs8LjWlu2">铁神型号 <span class="sort-arrow" data-page-node-id="D1U6AMzfcr62nFVrpagP9G"></span></th>
+              <th data-col="type" data-page-node-id="aOWWs7lSzDzRvmqMkEqJ0F">类型</th>
+              <th class="col-order" data-col="order" data-page-node-id="ordStatusCol">订购状态</th>
+              <th data-col="price" data-sort="price" class="sortable col-price" id="colPriceHeader" style="display:none" onclick="onSort('price')" data-page-node-id="UzOuBY0aGtp50VaEhwDsaF">报价 <span class="sort-arrow" data-page-node-id="toCDUvfX5P3LnXtRvL0eaL"></span></th>
+              <th data-col="updatedAt" data-sort="updatedAt" class="sortable" onclick="onSort('updatedAt')" data-page-node-id="F7qmdOCMgYRoFTCxkSVPAW">更新时间 <span class="sort-arrow" data-page-node-id="WHYhVeBZsrFB87vf5nfODH"></span></th>
+              <th data-col="moq" data-sort="moq" class="sortable" onclick="onSort('moq')" data-page-node-id="7x8yF2YH0KQUzX5viwBtqP">MOQ <span class="sort-arrow" data-page-node-id="zIFC5KoVJMwmNPTwD4g5JH"></span></th>
+              <th data-col="cert" data-page-node-id="bfgxmvFOY24SQK6FM9ydOQ">认证</th>
+              <th class="col-act" data-col="act" data-page-node-id="mHFZNidtngPxThLsvkLwBc">操作</th>
             </tr>
           </thead>
           <tbody id="productTbody" data-page-node-id="PmPuK4TxlLTgzsXPVGeKdY"></tbody>
@@ -774,8 +810,15 @@
   <div class="panel" id="panel-system">
     <div class="card">
       <h2>系统版本 <span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:6px">更新记录</span></h2>
-      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.11</span></div>
+      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.18</span></div>
       <ul class="changelog-list">
+        <li><b>工作台改为铺满屏幕 + 修复列宽拖拽后表头与数据不同轴</b>：去掉页面原先 <code>max-width:1400px</code> 的居中上限，工作台宽度直接等于视口宽度——宽屏上不再左右留白，产品表格拿到全部可用宽度，列多也不会被挤到换行。同时把表头 <code>&lt;th&gt;</code> 的左右内边距恢复成与单元格完全一致（此前为给拖拽手柄留位多加了右侧内边距，导致表头文字相对列轴偏移 2px），现在表头文字与列内数据严格同轴居中；表格超宽时仍只在表格容器内横向滚动，不会带动整页出现横向滚动条。</li>
+        <li><b>产品列表列宽可拖拽调整并自动记忆</b>：表头每列右缘新增拖拽手柄，按住拖动即可调整列宽（从相邻列「借/还」空间，总宽不变、整表不跳动，每列有最小宽度保护）；<b>双击手柄</b>可把该列恢复默认，操作栏新增「↺ 列宽」一键全部还原。调整结果自动存入浏览器本地（键 <code>lock_product_library_colw_v1</code>），下次打开自动还原；列宽属于设备本地偏好，不写入数据库，因此不参与 S3 同步与备份导入导出。表格在列宽总和超过容器时自动横向滚动，窄于容器时仍保持 100% 自适应。</li>
+        <li><b>批量工具新增「订购状态」一键修改</b>：批量工具弹窗改为标签页（<b>订购状态</b> / 查找替换）。「订购状态」页可按范围（全部产品 / 指定客户 / 仅列表中已勾选的产品）把订购状态一键设为「已订购」或「仅报价、未订购」；应用前先「预览影响」逐条列出将变更与保持不变的产品，二次确认后只改动状态确实不同的产品并刷新其「更新时间」。产品列表勾选后另新增「✓ 设为已订购 / ↺ 设为未订购」两枚快捷按钮，选中即改。<b>操作仅作用于本地数据，建议先「导出备份」以便撤销。</b></li>
+        <li><b>新增「订购状态」字段（已订购 / 仅报价、未订购）</b>：产品编辑弹窗新增勾选框，清晰标注「已订购（客户已下单）」，<b>默认不勾选 = 仅报价、未订购</b>，勾选旁有实时状态徽标。状态以布尔字段 <code>ordered</code> 随产品保存与读取：编辑弹窗回显勾选态、产品列表新增「订购状态」列（已订购=绿色徽标 / 仅报价=灰色徽标）、客户详情产品卡片同步展示；旧数据与 S3 同步缺省该字段时一律按「仅报价、未订购」安全读取，不会出现空值。</li>
+        <li><b>修复「新增产品页上传图片后无法放大」</b>：产品图编辑器的缩略图此前只提供删除按钮，缺少点击放大入口（产品库列表、客户详情页都能点开，唯独编辑弹窗不能）。现为缩略图补上点击放大预览（复用 <code>openImagePreviewFromCell</code>，鼠标样式 <code>zoom-in</code>），并给内部 <code>&lt;img&gt;</code> 设 <code>draggable="false"</code>，避免与拖拽排序抢事件。同时修复叠加弹窗的 ESC 行为：图片 / 包装预览层优先关闭，不再出现「按 ESC 把背后的产品编辑弹窗一起关掉」。</li>
+        <li><b>下拉选项支持「新增 + 删除」统一管理</b>：类型 / 交货条款 / 销售单位三类业务下拉统一由数据层驱动，每个下拉末尾新增「＋ 新增…」与「⚙ 管理…」两个入口，管理面板列出全部选项并实时显示「N 个产品在用 / 未被使用」，可逐项新增与删除。<b>删除时二次确认并明确告知该选项已有多少数据在使用</b>；确认后，正在使用该选项的产品自动回落为默认选项（列表首项），产品列表、类型筛选、报价单条款勾选组同步刷新，已存在数据的关联与展示保持一致（历史报价快照保持原样）。选到哨兵项会自动回退上一个有效值，保存时不会写入哨兵脏值。</li>
+        <li><b>修复新增产品后列表出现两条重复记录</b>：根因是弹窗「保存」按钮在 HTML 里已有 <code>onclick="saveProduct()"</code>，而 <code>bindProductModalButtons()</code> 又用 JS 重复绑定了同一次点击，导致一次点击触发两次保存；新增时隐藏域 <code>pId</code> 为空，两次都走「新增」分支于是 push 出两条相同产品。修复：兜底绑定改为「仅当元素没有 inline onclick 时才绑定」避免双触发，并让 <code>saveProduct()</code> 在新增成功后立刻把新 id 写回 <code>pId</code>，即使未来再被重复触发也会走「更新」而非新增，从根本上杜绝重复记录。</li>
         <li><b>包装文件支持内嵌预览</b>：图片（PNG/JPG/GIF/WebP/BMP/AVIF）与 PDF 类型在包装栏列表新增「预览」按钮，点击在应用内直接用浏览器查看，无需下载；其余格式（AI/CDR 等）仍提供下载。新增预览遮罩层（object URL 渲染，支持滚动锁/ESC/点遮罩关闭）。</li>
         <li><b>包装文件存储层迁移到 IndexedDB（取消 1.2MB 限制）</b>：包装设计文件（PDF/AI/CDR/图片等）实体改存浏览器 IndexedDB 的 <code>packfiles</code> store（单文件上限提升至 200MB），产品数据只保留文件 meta（id/名称/大小/类型），彻底摆脱 localStorage 5MB 配额；历史内嵌 dataUrl 数据自动迁移，旧「仅登记未内嵌」文件标记「未保存」待重新上传。S3 同步同步扩展：上传/下载将包装文件与产品图一并纳入 imageMap 通道并按 id 前缀（img_/pf_）分发还原，跨设备可完整取回包装文件；导出/导入备份新增 packFiles 字段兼容往返；删除产品/保存后自动 GC 清理 IndexedDB 孤儿实体。</li>
         <li><b>修复新设备下载后产品图裂开</b>：根因是 S3 同步的 <code>latest.json</code> 里 <code>imageMap</code> 格式不一致——上传端写入的是裸 hash 字符串 <code>imgId→hash</code>，而下载端按对象 <code>remote[id].hash</code> 读取，读到 undefined 导致请求 <code>images/undefined.enc</code>、图片全下载失败。新增兼容助手 <code>imgHashOf()</code> 统一取 hash（兼容旧字符串与新 <code>{hash}</code> 两种格式），上传跳检与下载三处一并修正，新旧云端数据均可正确下载图片。</li>
@@ -816,12 +859,19 @@
         <label data-page-node-id="ww22yKihdt6Fl9ntFEDxIQ">所属客户</label>
         <select id="pCustomer" style="max-width:380px" data-page-node-id="moF0Cli9I2ICE9tVtCje1j"></select>
       </div>
+      <div class="field span-all" data-page-node-id="ordStatusField">
+        <label data-page-node-id="ordStatusLabel">订购状态 <span class="hint" data-page-node-id="ordStatusHint">（标记该产品是否已被客户订购；默认「仅报价、未订购」）</span></label>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <label class="chk-inline" style="margin:0" data-page-node-id="ordStatusChk"><input type="checkbox" id="pOrdered" onchange="onOrderedChange()" data-page-node-id="ordStatusChkInput"> 已订购（客户已下单）</label>
+          <span id="pOrderedState" class="order-pill quiet" data-page-node-id="ordStatusPill">仅报价、未订购</span>
+        </div>
+      </div>
       <div class="form-grid" data-page-node-id="pxH8Lo1xvzleGb13ZCGdwT">
         <div class="field" data-page-node-id="wEsOymcsGi0HvK1tIVZzMs"><label data-page-node-id="m2kmJoHazjpa45cgYwltXg">产品型号 <span class="hint" data-page-node-id="9ckoAEwKbQ0Fttbf39NbjY">（必填，如 YS-8801）</span></label><input id="pCode" placeholder="型号编码" data-page-node-id="rR5gxD5oLARNUdJM0Ix4bE"></div>
         <div class="field" data-page-node-id="X9wvAFe3IQRTwTtpvIykji"><label data-page-node-id="SzeXgKDabJqnHizdTjHaf4">铁神型号 <span class="hint" data-page-node-id="QPJCXUFbqB3in93WZE80Az">（必填）</span></label><input id="pName" placeholder="如 不锈钢执手门锁" data-page-node-id="GGnFHALXzMZBlYrGO1NHgs"></div>
         <div class="field" data-page-node-id="u6P5mTM10aXYhSq4RXz0Ju"><label data-page-node-id="wA4y8Gquch8hzUdwrbkFcy">客户型号 <span class="hint" data-page-node-id="oXwzKmxFGkKiXZjRo5A24v">（非必填，不同客户可能用不同型号）</span></label><input id="pClientSku" placeholder="如 MUL-8801-EU" data-page-node-id="a77LSkBH1UwEQmJWAVAT81"></div>
         <div class="field" data-page-node-id="K0xApvwFZPBwKY0pTiEh7e"><label data-page-node-id="sp6ydB7hTzCazapNjYwJ37">锁具类型</label>
-          <select id="pType" onchange="onProductTypeChange(this)" data-page-node-id="NVTln1hw8mNodIaH15w8RN"></select>
+          <select id="pType" onchange="onOptionSelectChange(this,'type')" data-page-node-id="NVTln1hw8mNodIaH15w8RN"></select>
         </div>
         <div class="field span-all" data-page-node-id="HRCV3Fv0Zfw0mcZF8fPISS"><label data-page-node-id="7DkkSDOEK8WlyFl72sHY7W">基础描述</label><textarea id="pDesc" placeholder="材质、用途、卖点等"></textarea></div>
         <div class="field span-all" data-page-node-id="CVIMhMq4370jbQbk1blCeO">
@@ -860,7 +910,7 @@
           <label data-page-node-id="6YOQSIEbaQn4oyGWofiOwU">报价条款 <span class="hint" data-page-node-id="hamKElj4NeUilot6xzALAm">（该产品的默认交货条款，加入报价单时可一并带出）</span></label>
           <div class="pc-grid" data-page-node-id="4BEFR3UNE2yT9BwO3EVd7e">
             <div class="pf" data-page-node-id="ZxnHclyrisSNIVXpzDpc03"><label data-page-node-id="92BzhFsI5nArf4jY5l0JWk">交货条款</label>
-              <select id="pTradeTerm" data-page-node-id="rU5uT48uBSsdKdsgD1oxcU">
+              <select id="pTradeTerm" onchange="onOptionSelectChange(this,'tradeTerm')" data-page-node-id="rU5uT48uBSsdKdsgD1oxcU">
                 <option value="" data-page-node-id="3Z76u32zexQscZUV3JY3EU">— 未设 —</option>
                 <option value="EXW" data-page-node-id="5xkFCc5w3vacq5a02Un9yh">EXW 工厂交货</option>
                 <option value="FOB" data-page-node-id="aWDuSUBNCKu9eZmcqV3NQ4">FOB 船上交货</option>
@@ -915,7 +965,7 @@
             <div class="pf" data-page-node-id="bZcpFfEKErnHLbXRR6tdYg"><label data-page-node-id="USCCLkI8G4v2i7wVKevHJW">交货周期（天）</label><input type="number" min="0" step="1" id="pLeadTime" placeholder="0" data-page-node-id="v4GCt7zEd6dz1i6X63wnhH"></div>
             <div class="pf" data-page-node-id="Lpz9O3GmeR1s5T8amog0Mi"><label data-page-node-id="03m2SAHLsVwohLUA620RqS">原产国</label><input id="pOriginCountry" placeholder="如 中国" data-page-node-id="CDqxod8YZglfoaRYj80XWG"></div>
             <div class="pf" data-page-node-id="r2QcG8TTJVg9vQWVLoGrd9"><label data-page-node-id="h2f0UPnrnfG87Nj28MLaox">销售单位</label>
-              <select id="pSalesUnit" data-page-node-id="3s3rzEXKdly68GsjgoqygW">
+              <select id="pSalesUnit" onchange="onOptionSelectChange(this,'salesUnit')" data-page-node-id="3s3rzEXKdly68GsjgoqygW">
                 <option value="" data-page-node-id="PvZqvMS96OPBnrsxBJ0sY7">— 未设 —</option>
                 <option value="PCS" data-page-node-id="no2uW2uX2PkGXub7RTnwi7">PCS 件</option>
                 <option value="SET" data-page-node-id="rYavxxyb3ln4hVjivdJa3z">SET 套</option>
@@ -935,6 +985,28 @@
       <button class="btn danger" id="productDeleteBtn" style="margin-right:auto;display:none" onclick="deleteProductFromModal()" data-page-node-id="cfQpF0Y2INNjo0k14XmF3e">删除产品</button>
       <button class="btn" id="productCancelBtn" onclick="closeModal('productModal')" data-page-node-id="7nIbdsk9Z13LYx8qGePjdA">取消</button>
       <button class="btn primary" id="productSaveBtn" onclick="saveProduct()" data-page-node-id="5JLOViPlc1yqzVbFDBYSkD">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 下拉选项管理弹窗（新增 / 删除，类型·交货条款·销售单位通用） -->
+<div class="modal-mask" id="optionModal">
+  <div class="modal" style="width:min(540px,94vw)">
+    <div class="modal-head">
+      <h3 id="optionModalTitle">管理选项</h3>
+      <div class="head-actions">
+        <button class="btn ghost" onclick="closeOptionManager()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body-wrap">
+      <div class="modal-body">
+        <div class="opt-tip">删除选项时会先提示它的使用情况；确认删除后，正在使用该选项的产品会自动改为默认选项，产品列表与筛选同步刷新。</div>
+        <div class="opt-list" id="optionList"></div>
+        <div class="opt-add">
+          <input id="optionNewName" placeholder="输入新选项名称，回车即可添加" onkeydown="onOptionAddInput(event)">
+          <button class="btn primary" onclick="onOptionAddInput()">＋ 新增</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1007,9 +1079,39 @@
 <!-- 批量工具：查找替换（类 Excel） -->
 <div class="modal-mask" id="batchToolsModal" data-page-node-id="ACDpLIIUT1jDxvnUpnWyOT">
   <div class="modal" style="max-width:660px" data-page-node-id="6bLwTJqy9hj33BykHcshI6">
-    <div class="modal-head" data-page-node-id="AWBkhQ7F0BLsFFbtkUfyhd"><h3 data-page-node-id="PLTKRBqdZIaLhOjsHm6H8T">批量工具 · 查找替换</h3><button class="btn ghost" onclick="closeModal('batchToolsModal')" data-page-node-id="Lt0TfLbtYFH9zvCPpad30r">✕</button></div>
+    <div class="modal-head" data-page-node-id="AWBkhQ7F0BLsFFbtkUfyhd"><h3 data-page-node-id="PLTKRBqdZIaLhOjsHm6H8T">批量工具</h3><button class="btn ghost" onclick="closeModal('batchToolsModal')" data-page-node-id="Lt0TfLbtYFH9zvCPpad30r">✕</button></div>
     <div class="modal-body" data-page-node-id="1fvuQjPEMaC0v6RIY1OxVu">
-      <div class="bt-pane" id="btPaneFr" data-page-node-id="6wvCi4YEfGVRD3FHTTn4YY">
+      <div class="bt-tabs">
+        <button class="bt-tab active" data-tab="order" onclick="btSwitch('order')">订购状态</button>
+        <button class="bt-tab" data-tab="fr" onclick="btSwitch('fr')">查找替换</button>
+      </div>
+
+      <!-- ① 批量设置订购状态 -->
+      <div class="bt-pane" id="btPaneOrder">
+        <div class="bt-grid">
+          <div class="field"><label>设置范围</label>
+            <select id="ordScope" style="height:34px;padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;font-size:13px"></select>
+          </div>
+          <div class="field"><label>目标状态</label>
+            <select id="ordTarget" style="height:34px;padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;font-size:13px" onchange="ordPreview()">
+              <option value="1">已订购</option>
+              <option value="0">仅报价、未订购</option>
+            </select>
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end">
+            <label class="chk-inline" style="margin:0;white-space:nowrap"><input type="checkbox" id="ordOnlyChecked" onchange="ordPreview()"> 仅处理列表中已勾选的产品</label>
+          </div>
+        </div>
+        <div class="bt-actions">
+          <button class="btn" onclick="ordPreview()">预览影响</button>
+          <button class="btn accent" onclick="ordApply()">一键应用</button>
+          <span id="ordStatus" class="cs" style="margin-left:2px"></span>
+        </div>
+        <div id="ordResult" class="fr-result"></div>
+      </div>
+
+      <!-- ② 查找替换 -->
+      <div class="bt-pane" id="btPaneFr" style="display:none" data-page-node-id="6wvCi4YEfGVRD3FHTTn4YY">
         <div class="bt-grid" data-page-node-id="DJIKhtCeEu0DniNwH95Umx">
           <div class="field" data-page-node-id="sSsy61RoqimZVbL9qbwPUH"><label data-page-node-id="WtjcU3ZmChims68FGpnkOx">查找范围</label>
             <select id="frScope" style="height:34px;padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--r-md);background:#fff;font-size:13px" data-page-node-id="OAAoCKsBn3JQLqVp0hvr4Q">
@@ -1074,11 +1176,34 @@ const LS_PRE = 'lock_product_library_pre_v1';      // 破坏性操作（导入/�
 const LS_QUOTE = 'lock_product_library_quote_v1';  // 当前报价单草稿
 let firstRun = false;        // 真正首次：localStorage 中无该键
 let dataCorrupted = false;   // 有键但解析/结构异常
+// ============ 可管理的下拉选项（新增 / 删除）============
+// 所有「业务枚举型」下拉统一由 DB 里的字符串数组驱动，支持新增与删除。
+// labels 仅用于内置项的中文说明；用户自定义项直接显示原值。
+const DEFAULT_TYPES = ['门锁','挂锁','抽屉锁','执手锁','智能锁','五金配件'];
+const DEFAULT_TRADE_TERMS = ['EXW','FOB','CIF','CFR','DDP','FCA','其他'];
+const DEFAULT_SALES_UNITS = ['PCS','SET','PAIR','BOX','CTN','其他'];
+const TRADE_TERM_LABELS = { EXW:'EXW 工厂交货', FOB:'FOB 船上交货', CIF:'CIF 成本加保险费加运费', CFR:'CFR 成本加运费', DDP:'DDP 完税后交货', FCA:'FCA 货交承运人', '其他':'其他' };
+const SALES_UNIT_LABELS = { PCS:'PCS 件', SET:'SET 套', PAIR:'PAIR 对', BOX:'BOX 盒', CTN:'CTN 箱', '其他':'其他' };
+
 let DB = {
-  types: ['门锁','挂锁','抽屉锁','执手锁','智能锁','五金配件'],
+  types: DEFAULT_TYPES.slice(),
+  tradeTerms: DEFAULT_TRADE_TERMS.slice(),
+  salesUnits: DEFAULT_SALES_UNITS.slice(),
   products: [],
   customers: [],
 };
+// 统一补齐 DB 结构（加载旧数据 / 导入 / 恢复备份 / 重置 都走这里，避免字段缺失）
+function normalizeDB(src){
+  const out = Object.assign({ products:[], customers:[] }, src || {});
+  out.types      = Array.isArray(out.types)      ? out.types.slice()      : DEFAULT_TYPES.slice();
+  out.tradeTerms = Array.isArray(out.tradeTerms) ? out.tradeTerms.slice() : DEFAULT_TRADE_TERMS.slice();
+  out.salesUnits = Array.isArray(out.salesUnits) ? out.salesUnits.slice() : DEFAULT_SALES_UNITS.slice();
+  if(!Array.isArray(out.products)) out.products = [];
+  if(!Array.isArray(out.customers)) out.customers = [];
+  // 订购状态统一为布尔：undefined / 老数据 → false（仅报价、未订购）
+  out.products.forEach(p=>{ if(p && typeof p === 'object') p.ordered = !!p.ordered; });
+  return out;
+}
 
 function load(){
   let raw = null;
@@ -1086,7 +1211,7 @@ function load(){
   if(raw === null || raw === ''){ firstRun = true; return; }   // 真正首次：无键，不读
   try{
     const d = JSON.parse(raw);
-    if(d && Array.isArray(d.products)){ DB = Object.assign(DB, d); }
+    if(d && Array.isArray(d.products)){ DB = normalizeDB(d); }
     else { dataCorrupted = true; console.warn('本地数据结构异常，已保留默认结构，可从自动备份恢复'); }
   }catch(e){
     dataCorrupted = true;
@@ -1129,7 +1254,7 @@ function restoreBackup(){
   if(!src){ toast('没有可用的备份（从未保存过备份前状态）'); return; }
   if(!confirm('即将用【' + label + '】恢复数据，当前页面数据将被覆盖，确认继续？')) return;
   if(srcImgs && srcImgs.length){ putAllImages(srcImgs).catch(()=>{}); }   // 异步回写图片，不阻塞主恢复
-  DB = Object.assign({types:[],products:[],customers:[]}, src);
+  DB = normalizeDB(src);
   migrateDB();
   save(); renderProducts(); renderCustomers(); renderQuoteSelectors();
   toast('已从' + label + '恢复');
@@ -1299,6 +1424,10 @@ async function migrateOldPackFiles(){
 function migrateDB(){
   if(!DB.products) DB.products=[];
   if(!DB.customers) DB.customers=[];
+  // 可管理选项列表：老数据/异常数据补齐默认项（若已是数组——包括用户删空的空数组——则原样保留）
+  if(!Array.isArray(DB.types))      DB.types      = DEFAULT_TYPES.slice();
+  if(!Array.isArray(DB.tradeTerms)) DB.tradeTerms = DEFAULT_TRADE_TERMS.slice();
+  if(!Array.isArray(DB.salesUnits)) DB.salesUnits = DEFAULT_SALES_UNITS.slice();
   DB.customers.forEach(c=>{
     const rules=c.rules||{};
     Object.keys(rules).forEach(pid=>{
@@ -1452,9 +1581,11 @@ async function previewPackFile(id, name){
     if(m) m.classList.add('show');
   }catch(e){ toast('预览失败：' + (e&&e.message||e), 2600); }
 }
-/* 双保险：用 JS 直接绑定关闭/保存/取消，绕过 inline onclick，确保任何情况下按钮都能响应 */
+/* 双保险：用 JS 直接绑定关闭/保存/取消，绕过 inline onclick，确保任何情况下按钮都能响应。
+ * 重要：这些按钮在 HTML 里已带 inline onclick，若此处再绑一次会导致「一次点击触发两次」，
+ * 新增产品时会 push 两条重复记录。因此仅在元素没有 inline onclick 时才做兜底绑定。 */
 function bindProductModalButtons(){
-  const bind = (eid, fn)=>{ const el = document.getElementById(eid); if(el && !el.dataset.bound){ el.dataset.bound='1'; el.addEventListener('click', e=>{ e.preventDefault(); try{ fn(); }catch(err){ console.error(err); toast('操作出错：' + (err && err.message || err)); } }); } };
+  const bind = (eid, fn)=>{ const el = document.getElementById(eid); if(el && !el.dataset.bound && !el.hasAttribute('onclick')){ el.dataset.bound='1'; el.addEventListener('click', e=>{ e.preventDefault(); try{ fn(); }catch(err){ console.error(err); toast('操作出错：' + (err && err.message || err)); } }); } };
   bind('productCloseBtn', ()=>closeModal('productModal'));
   bind('productCancelBtn', ()=>closeModal('productModal'));
   bind('productSaveBtn', ()=>saveProduct());
@@ -1466,8 +1597,11 @@ function initModalCloseHelpers(){
   });
   document.addEventListener('keydown', e=>{
     if(e.key === 'Escape'){
-      const open = document.querySelector('.modal-mask.show');
-      if(open) closeModal(open.id);
+      // 预览层（图片 / 包装文件）优先关闭，避免按 ESC 时把背后的编辑弹窗一起关掉
+      const preview = ['imgPreviewMask','packPreviewMask'].map(id=>document.getElementById(id)).find(m=>m && m.classList.contains('show'));
+      if(preview){ closeModal(preview.id); return; }
+      const opens = document.querySelectorAll('.modal-mask.show');
+      if(opens.length) closeModal(opens[opens.length-1].id);   // 多层叠加时关最上层（DOM 顺序最后）
     }
   });
 }
@@ -1703,8 +1837,9 @@ function syncSelectArrows(){
 function renderTypeOptions(){
   const sel = document.getElementById('typeFilter');
   const cur = sel.value;
-  sel.innerHTML = '<option value="">全部类型</option>' + DB.types.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
-  sel.value = cur;
+  const types = Array.isArray(DB.types) ? DB.types : [];
+  sel.innerHTML = '<option value="">全部类型</option>' + types.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  sel.value = types.includes(cur) ? cur : '';   // 该类型已被删除时回到「全部类型」，避免空筛选
 }
 function setType(t){
   document.getElementById('typeFilter').value = t;
@@ -1720,6 +1855,167 @@ function renderCustomerFilter(){
     return `<option value="${c.id}" ${c.id===cur?'selected':''}>${esc(c.name)}</option>`;
   }).join('');
   if(!sel.value && DB.customers.length) sel.value = DB.customers[0].id;  // 默认选中第一个客户
+}
+
+// ============ 订购状态（已订购 / 仅报价、未订购）============
+// 数据字段：product.ordered（Boolean）。缺省 / 旧数据一律按「未订购（仅报价）」读取，
+// 因此迁移、S3 同步、导入备份等任何来源的老数据都能安全回显，不会出现空值。
+function isOrdered(p){ return !!(p && p.ordered); }
+// 编辑表单内：勾选框旁的实时徽标
+function onOrderedChange(){
+  const cb = document.getElementById('pOrdered');
+  const pill = document.getElementById('pOrderedState');
+  if(cb && pill){
+    pill.className = cb.checked ? 'order-pill ok' : 'order-pill quiet';
+    pill.textContent = cb.checked ? '已订购' : '仅报价、未订购';
+  }
+}
+// 列表 / 详情展示用徽标（short=true 用短文案，避免表格列换行）
+function orderPillHTML(p, short){
+  if(isOrdered(p)) return '<span class="order-pill ok" title="已订购：客户已下单">已订购</span>';
+  return `<span class="order-pill quiet" title="仅报价、未订购">${short ? '仅报价' : '仅报价、未订购'}</span>`;
+}
+
+/* ============ 产品列表：列宽可拖拽调整 + 本地记忆 ============
+   交互：拖表头右侧手柄 → 调该列宽（优先从相邻列「借/还」空间，邻居到底后本列继续变宽）；
+        双击手柄 → 该列恢复默认宽度；操作栏「↺ 列宽」→ 全部恢复默认。
+   记忆：宽度存 localStorage（键 lock_product_library_colw_v1），下次打开自动还原。
+   说明：列宽属于「设备本地偏好」，不进 DB，因此不参与 S3 同步 / 备份导入导出。 */
+const COL_WIDTH_KEY = 'lock_product_library_colw_v1';
+const COL_MIN_W = 56;   // 每列的拖拽下限（表头文字超宽会自动省略号）
+// 测量失败（面板隐藏 / 空表）时的兜底默认宽度
+const COL_DEF_W = { chk:36, code:130, clientSku:120, img:64, name:160, type:104, order:104, price:118, updatedAt:130, moq:104, cert:96, act:120 };
+// 每列的「内容下限」：列宽不得小于这个值，否则列内固定尺寸的内容（产品图 52px、类型/状态徽标、
+// 编辑删除按钮）会撑破单元格、被挤到列轴之外，看起来就像"不居中"。
+// 实际生效下限取 min(本表值, 该列自然宽度)：窄屏下自然宽度本来就更小，取自然宽度可避免"一拖就跳"。
+const COL_FLOOR = { chk:40, code:100, clientSku:96, img:84, name:110, type:104, order:96, price:110, updatedAt:108, moq:80, cert:84, act:136 };
+let _colWidths = null;   // 当前生效宽度 { key: px }
+let _colDefW = null;     // 首次测量出的默认宽度（供双击 / 全部还原）
+let _colResizeInit = false;
+
+function colThs(){ return Array.from(document.querySelectorAll('#productTable thead th[data-col]')); }
+function colVisible(th){ return !!th && th.style.display !== 'none' && th.offsetParent !== null; }
+
+function loadColWidths(){
+  try{
+    const raw = localStorage.getItem(COL_WIDTH_KEY);
+    if(!raw) return {};
+    const o = JSON.parse(raw); const out = {};
+    if(o && typeof o === 'object') Object.keys(o).forEach(k=>{
+      const v = Math.round(Number(o[k]));
+      if(isFinite(v) && v > 0) out[k] = v;
+    });
+    return out;
+  }catch(e){ return {}; }
+}
+function saveColWidths(){ try{ localStorage.setItem(COL_WIDTH_KEY, JSON.stringify(_colWidths||{})); }catch(e){} }
+
+// 把宽度写到表头 th；并按「可见列宽之和」设置表格 min-width（窄于容器时仍 100% 自适应）
+function applyColWidths(){
+  const ths = colThs();
+  if(!ths.length || !_colWidths) return;
+  let sum = 0;
+  ths.forEach(th=>{
+    const w = Math.round(Number(_colWidths[th.dataset.col]) || 0);
+    if(w > 0){
+      th.style.width = w + 'px';
+      th.style.minWidth = w + 'px';
+      if(colVisible(th)) sum += w;
+    }
+  });
+  const tbl = document.getElementById('productTable');
+  if(tbl) tbl.style.minWidth = sum ? (sum + 'px') : '';
+}
+
+// 初始化：先在「自然布局」下测量默认列宽，再套用记忆值并装上手柄
+function initColResize(){
+  const ths = colThs();
+  if(!ths.length || _colResizeInit) return;
+  _colResizeInit = true;
+  const saved = loadColWidths();
+  _colWidths = {}; _colDefW = {};
+  ths.forEach(th=>{
+    const k = th.dataset.col;
+    const measured = Math.round(th.getBoundingClientRect().width);   // 此时仍是 auto 布局，量到的是自然宽度
+    const def = measured > 0 ? measured : (COL_DEF_W[k] || 120);
+    _colDefW[k] = def;
+    _colWidths[k] = saved[k] || def;
+  });
+  const tbl = document.getElementById('productTable');
+  if(tbl) tbl.classList.add('cols-ready');   // 切到固定布局后按设定值精确渲染
+  applyColWidths();
+  ths.forEach(attachColResizer);
+}
+
+function attachColResizer(th){
+  if(th.querySelector('.col-resizer')) return;
+  const h = document.createElement('span');
+  h.className = 'col-resizer';
+  h.title = '拖拽调整列宽 · 双击恢复默认';
+  h.addEventListener('pointerdown', e=>startColResize(e, th, h));
+  h.addEventListener('click', e=>{ e.stopPropagation(); });   // 别把手柄的点击冒泡给表头排序
+  h.addEventListener('dblclick', e=>{ e.preventDefault(); e.stopPropagation(); resetColWidth(th.dataset.col); });
+  th.appendChild(h);
+}
+
+function startColResize(e, th, handle){
+  if(e.button !== undefined && e.button !== 0) return;
+  e.preventDefault(); e.stopPropagation();
+  const vis = colThs().filter(colVisible);
+  const i = vis.indexOf(th);
+  if(i < 0) return;
+  const next = vis[i+1] || null;
+  const key = th.dataset.col, nextKey = next ? next.dataset.col : null;
+  const startX = e.clientX;
+  const startW = th.getBoundingClientRect().width;
+  const nextStartW = next ? next.getBoundingClientRect().width : 0;
+  // 生效下限 = min(内容下限, 该列自然宽度)：内容永远放得下，且不会一拖就跳
+  const floorOf = k => Math.min(COL_FLOOR[k] || COL_MIN_W, Math.round((_colDefW && _colDefW[k]) || COL_MIN_W));
+  const minW = floorOf(key);
+  const nextMinW = nextKey ? floorOf(nextKey) : 0;
+  handle.classList.add('active');
+  document.body.classList.add('col-resizing');
+  try{ handle.setPointerCapture(e.pointerId); }catch(_e){}
+  let moved = false;
+  const onMove = ev=>{
+    const dx = ev.clientX - startX;
+    if(!moved && Math.abs(dx) < 2) return;   // 抖动容差，避免误触就改宽
+    moved = true;
+    const w = Math.max(minW, Math.round(startW + dx));
+    const delta = w - startW;
+    if(vis.length > 1 && next){
+      // 优先从相邻列借/还（邻居留出自身下限）；借不够时本列继续变宽，超出部分由表格横向滚动承接
+      const give = Math.max(0, Math.round(nextStartW) - nextMinW);
+      const take = Math.min(delta, give);
+      _colWidths[nextKey] = Math.round(nextStartW - take);
+    }
+    _colWidths[key] = w;
+    applyColWidths();
+  };
+  const onUp = ()=>{
+    handle.classList.remove('active');
+    document.body.classList.remove('col-resizing');
+    handle.removeEventListener('pointermove', onMove);
+    handle.removeEventListener('pointerup', onUp);
+    handle.removeEventListener('pointercancel', onUp);
+    if(moved){ saveColWidths(); try{ toast('列宽已调整并记住', 1400); }catch(_e){} }
+  };
+  handle.addEventListener('pointermove', onMove);
+  handle.addEventListener('pointerup', onUp);
+  handle.addEventListener('pointercancel', onUp);
+}
+
+function resetColWidth(key){
+  if(!key || !_colDefW || !_colDefW[key]) return;
+  _colWidths[key] = _colDefW[key];
+  applyColWidths(); saveColWidths();
+  try{ toast('该列宽已恢复默认', 1400); }catch(_e){}
+}
+function resetAllColWidths(){
+  if(!_colDefW) return;
+  Object.keys(_colDefW).forEach(k=>{ _colWidths[k] = _colDefW[k]; });
+  applyColWidths(); saveColWidths();
+  try{ toast('列宽已全部恢复默认', 1600); }catch(_e){}
 }
 
 function renderProducts(){
@@ -1742,6 +2038,7 @@ function renderProducts(){
       : '请先在「客户档案」中创建客户，再为其添加产品';
     const bar=document.getElementById('custFilterBar'); if(bar) bar.innerHTML='';
     const colPrice=document.getElementById('colPriceHeader'); if(colPrice) colPrice.style.display='none';
+    applyColWidths();   // 报价列隐藏后重算可见列总宽
     const summary=document.getElementById('productSummary'); if(summary) summary.textContent='请选择客户';
     const btnBatch=document.getElementById('btnBatchDelete'); if(btnBatch) btnBatch.style.display='none';
     const selCount=document.getElementById('selCount'); if(selCount) selCount.textContent='';
@@ -1769,6 +2066,7 @@ function renderProducts(){
 
   // 报价列始终显示（已处于客户范围内）
   document.getElementById('colPriceHeader').style.display='';
+  applyColWidths();   // 报价列恢复显示后重算可见列总宽
 
   const sym={CNY:'¥',USD:'$',EUR:'€'}[cust.currency||'CNY']||'¥';
   // 排序（筛选之后、分页之前）
@@ -1822,6 +2120,7 @@ function renderProducts(){
       <td class="col-img">${img}</td>
       <td><div class="nm">${esc(p.name)}</div>${p.desc?`<div class="cs" style="margin:2px auto 0;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(p.desc)}">${esc(p.desc)}</div>`:''}</td>
       <td><span class="type-pill">${esc(p.type)}</span></td>
+      <td class="col-order">${orderPillHTML(p, true)}</td>
       <td class="col-price">${priceCell}</td>
       <td>${p.updatedAt ? esc(p.updatedAt) : '<span class="cs">—</span>'}</td>
       <td>${p.moq ? esc(String(p.moq)) + (p.salesUnit?(' '+esc(p.salesUnit)):'') : '<span class="cs">—</span>'}</td>
@@ -1967,7 +2266,23 @@ function updateBatchBar(){
   document.getElementById('selCount').textContent = ids.length ? `已选 ${ids.length} 项` : '';
   document.getElementById('btnBatchDelete').style.display = ids.length ? '' : 'none';
   document.getElementById('btnBatchQuote').style.display = ids.length ? '' : 'none';
+  const bOrd = document.getElementById('btnBatchOrdered'); if(bOrd) bOrd.style.display = ids.length ? '' : 'none';
+  const bNot = document.getElementById('btnBatchNotOrdered'); if(bNot) bNot.style.display = ids.length ? '' : 'none';
   checks.forEach(c=>{ c.closest('tr').style.background = c.checked ? 'var(--info-bg)' : ''; });
+}
+
+/* 勾选后一键切换订购状态（快捷入口，与「批量工具 → 订购状态」同一语义） */
+function batchSetOrdered(want){
+  const ids = [...document.querySelectorAll('.rowChk')].filter(c=>c.checked).map(c=>c.value);
+  if(!ids.length) return;
+  const label = want ? '已订购' : '仅报价、未订购';
+  const toChange = ids.filter(id=>{ const p = DB.products.find(x=>x.id===id); return p && isOrdered(p) !== want; });
+  if(!toChange.length){ toast(`已选产品均已是「${label}」`); return; }
+  if(!confirm(`确认把选中的 ${toChange.length} 个产品设为「${label}」？\n\n已选 ${ids.length} 个，其余已是该状态、不受影响；改动会刷新这些产品的「更新时间」。`)) return;
+  const now = fmtNow();
+  toChange.forEach(id=>{ const p = DB.products.find(x=>x.id===id); if(p){ p.ordered = want; p.updatedAt = now; } });
+  save(); renderProducts();
+  toast(`已将 ${toChange.length} 个产品设为「${label}」`);
 }
 
 function toggleSelectAll(on){
@@ -1999,11 +2314,101 @@ function openBatchTools(){
   const scope = document.getElementById('frScope');
   if(scope) scope.innerHTML = '<option value="">全部产品</option>' +
     DB.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  // 订购状态范围：客户下拉（默认跟随当前筛选的客户，便于只改本客户）
+  const oScope = document.getElementById('ordScope');
+  if(oScope){
+    const cur = document.getElementById('customerFilter').value;
+    oScope.innerHTML = '<option value="">全部产品（所有客户）</option>' +
+      DB.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+    oScope.value = (cur && DB.customers.some(c=>c.id===cur)) ? cur : '';
+  }
+  // 「仅处理已勾选」：列表中确实有勾选时才可选；无勾选则禁用并取消，避免误用空集合
+  const oOnly = document.getElementById('ordOnlyChecked');
+  if(oOnly){
+    const hasChecked = [...document.querySelectorAll('.rowChk')].some(c=>c.checked);
+    oOnly.disabled = !hasChecked;
+    if(!hasChecked) oOnly.checked = false;
+  }
   const res = document.getElementById('frResult');
   const st = document.getElementById('frStatus');
   if(res) res.innerHTML = '';
   if(st) st.textContent = '';
   document.getElementById('batchToolsModal').classList.add('show');
+  btSwitch('order');   // 默认停在「订购状态」，一键修改更直接
+}
+
+/* ── 批量设置订购状态 ──
+   作用对象：全部产品 / 指定客户 / 仅列表中已勾选的产品；目标：已订购 / 仅报价、未订购。
+   先预览影响再确认应用，只改动状态确实不同的产品，并刷新其「更新时间」。 */
+function btSwitch(tab){
+  const isFr = tab === 'fr';
+  const p1 = document.getElementById('btPaneOrder'), p2 = document.getElementById('btPaneFr');
+  if(p1) p1.style.display = isFr ? 'none' : '';
+  if(p2) p2.style.display = isFr ? '' : 'none';
+  document.querySelectorAll('#batchToolsModal .bt-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab === tab));
+  if(!isFr) ordPreview();
+}
+// 解析本次要作用的产品集合
+function ordTargets(){
+  const onlyChecked = document.getElementById('ordOnlyChecked');
+  if(onlyChecked && onlyChecked.checked){
+    const ids = [...document.querySelectorAll('.rowChk')].filter(c=>c.checked).map(c=>c.value);
+    return { list:(DB.products||[]).filter(p=>ids.includes(p.id)), desc:`列表中已勾选的产品（${ids.length} 个）`, emptyTip:'请先在产品列表里勾选要处理的产品，再回到这里应用。' };
+  }
+  const scope = document.getElementById('ordScope').value;
+  if(scope){
+    const c = DB.customers.find(x=>x.id===scope);
+    return { list:productsOf(scope), desc:`客户「${c?c.name:''}」下的产品`, emptyTip:'该客户下暂无产品。' };
+  }
+  return { list:(DB.products||[]).slice(), desc:'全部产品（所有客户）', emptyTip:'产品库为空。' };
+}
+// 预览：列出将变更与保持不变的产品
+function ordPreview(){
+  const t = ordTargets();
+  const want = document.getElementById('ordTarget').value === '1';
+  const box = document.getElementById('ordResult');
+  const st = document.getElementById('ordStatus');
+  if(!box) return;
+  if(!t.list.length){
+    box.innerHTML = `<div class="fr-empty-hint">${t.emptyTip}</div>`;
+    if(st) st.textContent = '';
+    window.__ordPlan = { ids:[], want, desc:t.desc, total:0 };
+    return;
+  }
+  const toChange = t.list.filter(p=>isOrdered(p) !== want);
+  if(st) st.textContent = `${t.desc} 共 ${t.list.length} 个，其中 ${toChange.length} 个将变更为「${want?'已订购':'仅报价、未订购'}」`;
+  box.innerHTML = t.list.map(p=>{
+    const cur = isOrdered(p);
+    const willChange = cur !== want;
+    const cust = (DB.customers.find(c=>c.id===p.customerId)||{}).name || '';
+    return `<div class="fr-row" style="opacity:${willChange?1:.5}">
+      <span class="fr-prod" title="${esc(p.name)}">${esc(p.code)}</span>
+      <span class="fr-field">${esc(cust)}</span>
+      <span class="fr-old">${orderPillHTML(p, true)}</span>
+      <span class="fr-arrow">→</span>
+      <span class="fr-new">${willChange ? (want ? '<span class="order-pill ok">已订购</span>' : '<span class="order-pill quiet">仅报价</span>') : '<span class="cs">不变</span>'}</span>
+    </div>`;
+  }).join('');
+  window.__ordPlan = { ids:toChange.map(p=>p.id), want, desc:t.desc, total:t.list.length };
+}
+// 一键应用：二次确认后写入
+function ordApply(){
+  ordPreview();   // 以当下的范围/目标重算计划，避免用旧计划误改
+  const plan = window.__ordPlan;
+  if(!plan) return;
+  const label = plan.want ? '已订购' : '仅报价、未订购';
+  if(!plan.total){ toast('所选范围内暂无产品'); return; }
+  if(!plan.ids.length){ toast(`无需变更：${plan.desc}已是「${label}」`); return; }
+  if(!confirm(`确认把 ${plan.ids.length} 个产品（${plan.desc}）的订购状态改为「${label}」？\n\n该范围共 ${plan.total} 个，其余 ${plan.total - plan.ids.length} 个已是该状态、不受影响。\n改动会刷新这些产品的「更新时间」。`)) return;
+  const now = fmtNow();
+  let n = 0;
+  plan.ids.forEach(id=>{
+    const p = DB.products.find(x=>x.id === id);
+    if(p){ p.ordered = plan.want; p.updatedAt = now; n++; }
+  });
+  save(); renderProducts();
+  toast(`已将 ${n} 个产品设为「${label}」`);
+  ordPreview();
 }
 
 /* ── 查找替换（类 Excel） ──
@@ -2342,8 +2747,10 @@ function bindImageDnd(box){
 function renderImageEditor(){
   const box=document.getElementById('imageEditor');
   if(!_tempImages.length){ box.innerHTML='<div class="img-empty">暂无图片（可拖拽缩略图调整顺序，第一张为封面）</div>'; return; }
+  // 缩略图可点击放大（与产品库列表、客户详情一致）；× 删除按钮 stopPropagation 不触发预览
   box.innerHTML=_tempImages.map((im,i)=>`<div class="img-thumb" draggable="true" data-i="${i}" style="position:relative;width:80px;height:80px">
-    <img src="${im.src||''}" style="width:80px;height:80px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--line-strong)">
+    <img src="${im.src||''}" data-img="${esc(im.src||'')}" draggable="false" onclick="openImagePreviewFromCell(this)" title="点击放大预览"
+      style="width:80px;height:80px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--line-strong);cursor:zoom-in">
     ${i===0?'<span class="img-cover-tag">主图</span>':'<span class="img-hint">拖拽</span>'}
     <span class="img-del" onclick="event.stopPropagation();removeImage(${i})">×</span>
   </div>`).join('');
@@ -2777,12 +3184,17 @@ function openProductModal(id, presetCid){
   try{
   _tempConfigs = [];
   const t = document.getElementById('productModalTitle');
-  const typeSel = document.getElementById('pType');
-  // 类型项支持「新增」：现有类型后追加一个「＋ 新增类型…」哨兵项，选中即引导录入新类型
-  const editingType = (id && (DB.products.find(x=>x.id===id)||{}).type) || '';
-  const baseTypes = (editingType && !DB.types.includes(editingType)) ? [editingType, ...DB.types] : DB.types.slice();
-  typeSel.innerHTML = baseTypes.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')
-    + `<option value="__ADD_NEW_TYPE__">＋ 新增类型…</option>`;
+  // 可管理下拉统一渲染（类型 / 交货条款 / 销售单位）：末尾带 ＋新增… / ⚙管理… 两个入口。
+  // 若该产品的当前值已不在选项列表（老数据或该项已被删除），临时补进下拉，保证展示一致。
+  const _editing = id ? (DB.products.find(x=>x.id===id) || {}) : {};
+  Object.keys(OPTION_GROUPS).forEach(k=>{
+    const g = OPTION_GROUPS[k];
+    const el = document.getElementById(g.selId); if(!el) return;
+    const cur = String(_editing[g.productField] == null ? '' : _editing[g.productField]);
+    const extra = (cur && !(Array.isArray(DB[g.dbKey]) && DB[g.dbKey].includes(cur))) ? [cur] : [];
+    el.innerHTML = optionSelectHTML(k, cur, extra);
+    el.dataset.prev = cur;
+  });
   // 所属客户下拉
   const custSel = document.getElementById('pCustomer');
   if(custSel){
@@ -2827,6 +3239,7 @@ function openProductModal(id, presetCid){
     document.getElementById('pOriginCountry').value = p.originCountry || '';
     document.getElementById('pSalesUnit').value = p.salesUnit || '';
     document.getElementById('pSampleAvailable').checked = !!(p.sampleAvailable);
+    document.getElementById('pOrdered').checked = isOrdered(p);   // 订购状态回显（旧数据缺省=未订购）
     _initPrice = String(document.getElementById('pPrice').value);
     _initCost = String(document.getElementById('pCost').value);
     _tempPack = stripPackData(p.pack||emptyPack());
@@ -2854,10 +3267,17 @@ function openProductModal(id, presetCid){
     document.getElementById('pOriginCountry').value='';
     document.getElementById('pSalesUnit').value='';
     document.getElementById('pSampleAvailable').checked=false;
+    document.getElementById('pOrdered').checked=false;   // 默认：仅报价、未订购
     _initPrice=''; _initCost='';
     _tempPack = emptyPack();
   }
+  // 记录每个可管理下拉的「当前有效值」，供 ＋新增… / ⚙管理… 哨兵选中后回退
+  Object.keys(OPTION_GROUPS).forEach(k=>{
+    const el = document.getElementById(OPTION_GROUPS[k].selId);
+    if(el) el.dataset.prev = el.value;
+  });
   _cfgSel = null;
+  onOrderedChange();   // 同步勾选框旁的状态徽标（编辑回显 / 新增默认）
   fillPackForm(_tempPack);
   renderConfigEditor();
   renderImageEditor();
@@ -2871,16 +3291,178 @@ function openProductModal(id, presetCid){
   applyModalSize('productModal');   // 记忆尺寸 / 小屏全屏
   ensureModalInViewport('productModal');  // 兜底：底部按钮必须完整可见、可点击
 }
-function onProductTypeChange(sel){
-  const ADD='__ADD_NEW_TYPE__';
-  if(sel.value!==ADD) return;
-  const name=(window.prompt('输入新类型名称：','')||'').trim();
-  if(!name){ sel.value = DB.types[0]||''; return; }   // 取消 / 空 → 回退首项
-  if(!DB.types.includes(name)){ DB.types.push(name); save(); }  // 新类型持久化
-  // 重新渲染选项（含哨兵）并选中刚新增的类型
-  sel.innerHTML = DB.types.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')
-    + `<option value="${ADD}">＋ 新增类型…</option>`;
-  sel.value = name;
+// ============ 下拉选项管理（新增 / 删除，统一处理）============
+// 覆盖所有「业务枚举型」下拉：类型 / 交货条款 / 销售单位。
+// 每个下拉末尾都提供两个入口：＋ 新增…  和  ⚙ 管理…（管理面板内可逐项新增与删除）。
+const OPTION_GROUPS = {
+  type:      { label:'类型',     dbKey:'types',      productField:'type',      selId:'pType',      labels:null,               blank:undefined },
+  tradeTerm: { label:'交货条款', dbKey:'tradeTerms', productField:'tradeTerm', selId:'pTradeTerm', labels:TRADE_TERM_LABELS,  blank:'— 未设 —' },
+  salesUnit: { label:'销售单位', dbKey:'salesUnits', productField:'salesUnit', selId:'pSalesUnit', labels:SALES_UNIT_LABELS,  blank:'— 未设 —' },
+};
+const OPT_ADD    = '__ADD_NEW__';     // 哨兵前缀
+const OPT_MANAGE = '__MANAGE__';
+function onProductTypeChange(sel){ onOptionSelectChange(sel, 'type'); }   // 兼容旧调用
+
+// 选项显示名：内置项带中文说明，自定义项直接显示原值
+function optionLabel(groupKey, value){
+  const g = OPTION_GROUPS[groupKey];
+  const v = String(value==null?'':value);
+  return (g && g.labels && g.labels[v]) ? g.labels[v] : v;
+}
+// 该选项当前被多少个产品使用（删除确认时明确告知）
+function countOptionUsage(groupKey, value){
+  const g = OPTION_GROUPS[groupKey]; if(!g) return 0;
+  return (DB.products||[]).filter(p=>p && String(p[g.productField]||'')===String(value)).length;
+}
+// 生成下拉选项 HTML；extraValues：当前值不在列表时临时补进来，保证历史数据也能正常显示
+function optionSelectHTML(groupKey, selected, extraValues){
+  const g = OPTION_GROUPS[groupKey]; if(!g) return '';
+  const list = Array.isArray(DB[g.dbKey]) ? DB[g.dbKey].slice() : [];
+  (extraValues||[]).forEach(v=>{ if(v && !list.includes(v)) list.unshift(v); });
+  const sel = String(selected==null?'':selected);
+  let html = '';
+  if(g.blank !== undefined) html += `<option value="" ${sel===''?'selected':''}>${esc(g.blank)}</option>`;
+  html += list.map(v=>`<option value="${esc(v)}" ${String(v)===sel?'selected':''}>${esc(optionLabel(groupKey,v))}</option>`).join('');
+  html += `<option value="${OPT_ADD}${groupKey}">＋ 新增${esc(g.label)}…</option>`;
+  html += `<option value="${OPT_MANAGE}${groupKey}">⚙ 管理${esc(g.label)}选项…</option>`;
+  return html;
+}
+// 重渲染产品弹窗内的可管理下拉（保留当前有效选中值）
+function refreshOptionSelects(){
+  Object.keys(OPTION_GROUPS).forEach(k=>{
+    const g = OPTION_GROUPS[k];
+    const el = document.getElementById(g.selId); if(!el) return;
+    const cur = el.value;
+    if(cur && (cur.startsWith(OPT_ADD) || cur.startsWith(OPT_MANAGE))) return;   // 停留在哨兵项时不动
+    const extra = (cur && !(Array.isArray(DB[g.dbKey]) && DB[g.dbKey].includes(cur))) ? [cur] : [];
+    el.innerHTML = optionSelectHTML(k, cur, extra);
+    el.dataset.prev = cur;
+  });
+}
+// 下拉变更统一入口：新增哨兵 / 管理哨兵 / 普通选择
+function onOptionSelectChange(sel, groupKey){
+  const g = OPTION_GROUPS[groupKey]; if(!g) return;
+  const v = sel.value;
+  if(v === OPT_ADD + groupKey){
+    const name = (window.prompt(`输入新的${g.label}名称：`, '') || '').trim();
+    if(!name){ sel.value = sel.dataset.prev || ''; return; }   // 取消 / 空 → 回退
+    if(!addOption(groupKey, name)) sel.value = sel.dataset.prev || '';   // 失败（重名等）也回退
+    return;                                                     // 成功后 addOption 已选中新值
+  }
+  if(v === OPT_MANAGE + groupKey){
+    sel.value = sel.dataset.prev || '';   // 先回退，避免停留在哨兵项
+    openOptionManager(groupKey);
+    return;
+  }
+  sel.dataset.prev = v;
+}
+// 新增选项
+function addOption(groupKey, rawName){
+  const g = OPTION_GROUPS[groupKey]; if(!g) return false;
+  const name = String(rawName||'').trim();
+  if(!name){ toast('名称不能为空'); return false; }
+  if(!Array.isArray(DB[g.dbKey])) DB[g.dbKey] = [];
+  if(DB[g.dbKey].includes(name)){ toast(`「${name}」已存在`); return false; }
+  DB[g.dbKey].push(name);
+  save();
+  const el = document.getElementById(g.selId);
+  if(el){
+    // 若此刻还停在哨兵项上，先回退到上一个有效值，否则 refreshOptionSelects 会跳过重建
+    const cur = el.value;
+    if(cur && (cur.startsWith(OPT_ADD) || cur.startsWith(OPT_MANAGE))) el.value = el.dataset.prev || '';
+  }
+  refreshOptionSelects();
+  if(el){
+    // 下拉此刻若不是当前渲染目标（例如从管理面板新增），补渲染一次并选中新值
+    if(!Array.prototype.some.call(el.options, o=>o.value===name)) el.innerHTML = optionSelectHTML(groupKey, name, []);
+    el.value = name; el.dataset.prev = name;
+  }
+  renderTypeOptions();
+  renderQuoteTermsUI();
+  renderOptionManager();
+  toast(`已新增${g.label}「${name}」`);
+  return true;
+}
+// 删除选项：二次确认 + 明确告知使用情况；确认后已存在数据回落为默认选项
+function removeOption(groupKey, value){
+  const g = OPTION_GROUPS[groupKey]; if(!g) return false;
+  const list = DB[g.dbKey]; if(!Array.isArray(list)) return false;
+  const idx = list.indexOf(value); if(idx < 0) return false;
+  const used = countOptionUsage(groupKey, value);
+  const rest = list.filter(x=>x!==value);
+  const fallback = rest.length ? rest[0] : '';                       // 删除后的默认选项 = 列表首项
+  const fbText = fallback ? `「${optionLabel(groupKey, fallback)}」` : '（未设）';
+  const msg = used > 0
+    ? `「${optionLabel(groupKey,value)}」当前有 ${used} 个产品正在使用。\n\n确认删除后，这 ${used} 个产品的「${g.label}」将自动改为默认选项${fbText}，产品列表与筛选会同步刷新。\n\n确认删除该选项？`
+    : `确认删除${g.label}「${optionLabel(groupKey,value)}」？\n\n当前没有产品在使用该选项。`;
+  if(!confirm(msg)) return false;
+  list.splice(idx, 1);
+  // 已存在数据回落，保证关联与展示一致
+  let touched = 0;
+  (DB.products||[]).forEach(p=>{
+    if(p && String(p[g.productField]||'')===String(value)){ p[g.productField] = fallback; p.updatedAt = fmtNow(); touched++; }
+  });
+  // 报价单当前草稿引用该条款时一并回落（历史报价快照保持原样）
+  if(groupKey==='tradeTerm' && typeof quote==='object' && quote && quote.tradeTerm===value) quote.tradeTerm = fallback;
+  save();
+  refreshOptionSelects();
+  renderTypeOptions();
+  renderProducts();
+  renderQuoteTermsUI();
+  try{ renderQuote(); }catch(e){}
+  renderOptionManager();
+  toast(`已删除${g.label}「${value}」` + (touched ? `，${touched} 个产品已改为${fbText}` : ''));
+  return true;
+}
+// ---- 选项管理面板 ----
+let _optGroup = null;
+function optionModalBindOnce(){
+  const host = document.getElementById('optionList');
+  if(host && !host.dataset.bound){
+    host.dataset.bound = '1';
+    host.addEventListener('click', e=>{
+      const btn = e.target.closest('button[data-opt]');
+      if(!btn) return;
+      removeOption(_optGroup, btn.getAttribute('data-opt'));
+    });
+  }
+}
+function openOptionManager(groupKey){
+  if(!OPTION_GROUPS[groupKey]) return;
+  _optGroup = groupKey;
+  optionModalBindOnce();
+  renderOptionManager();
+  document.getElementById('optionModal').classList.add('show');
+  const inp = document.getElementById('optionNewName'); if(inp){ inp.value=''; }
+}
+function closeOptionManager(){
+  const m = document.getElementById('optionModal'); if(m) m.classList.remove('show');
+  _optGroup = null;
+}
+function onOptionAddInput(e){
+  if(e && e.key && e.key !== 'Enter') return;
+  if(e && e.key === 'Enter' && e.preventDefault) e.preventDefault();
+  const inp = document.getElementById('optionNewName'); if(!inp || !_optGroup) return;
+  const v = (inp.value||'').trim();
+  if(!v){ toast('请输入选项名称'); return; }
+  if(addOption(_optGroup, v)) inp.value = '';
+}
+function renderOptionManager(){
+  if(!_optGroup) return;
+  const g = OPTION_GROUPS[_optGroup];
+  const list = Array.isArray(DB[g.dbKey]) ? DB[g.dbKey] : [];
+  const title = document.getElementById('optionModalTitle');
+  if(title) title.textContent = `管理「${g.label}」选项`;
+  const host = document.getElementById('optionList');
+  if(!host) return;
+  host.innerHTML = list.length ? list.map(v=>{
+    const n = countOptionUsage(_optGroup, v);
+    return `<div class="opt-row">
+      <span class="opt-name">${esc(optionLabel(_optGroup, v))}</span>
+      <span class="opt-use ${n?'on':''}">${n ? (n + ' 个产品在用') : '未被使用'}</span>
+      <button class="btn sm danger" data-opt="${esc(v)}">删除</button>
+    </div>`;
+  }).join('') : '<div class="opt-empty">暂无选项，请在下方新增</div>';
 }
 
 async function saveProduct(){
@@ -2917,6 +3499,7 @@ async function saveProduct(){
       originCountry: document.getElementById('pOriginCountry').value.trim(),
       salesUnit: document.getElementById('pSalesUnit').value,
       sampleAvailable: document.getElementById('pSampleAvailable').checked,
+      ordered: document.getElementById('pOrdered').checked,   // true=已订购；false=仅报价、未订购
       configs: _tempConfigs
         .map(c=>({name:String(c.name||'').trim(), options:(c.options||[]).map(o=>String(o||'').trim()).filter(Boolean)}))
         .filter(c=>c.name && c.options.length),
@@ -2929,7 +3512,11 @@ async function saveProduct(){
       const idx = DB.products.findIndex(x=>x.id===id);
       DB.products[idx] = Object.assign(DB.products[idx], data);
     } else {
-      DB.products.push(Object.assign({id:uid(), createdAt: now}, data));
+      const newId = uid();
+      DB.products.push(Object.assign({id:newId, createdAt: now}, data));
+      // 防重复提交：立即把新 id 写回隐藏域。若保存被意外触发第二次，
+      // 上面的 id 分支会命中并走「更新」而非再 push 一条，从根本上杜绝重复记录。
+      document.getElementById('pId').value = newId;
     }
     // 保存后把列表切到该客户，便于立即看到刚建的产品
     const cf = document.getElementById('customerFilter'); if(cf) cf.value = customerId;
@@ -3529,7 +4116,7 @@ function openCustomerDetail(cid){
     return `<div class="detail-product">
       ${img}
       <div class="info">
-        <b>${esc(p.name)}</b>
+        <b>${esc(p.name)}</b> ${orderPillHTML(p)}
         <div style="font-size:12px;color:var(--muted)">型号：${esc(p.code)}${p.clientSku?` · 客户型号：<b style="color:var(--brand)">${esc(p.clientSku)}</b>`:''}</div>
         <div class="cfg">${cfg || '<span style="color:#94a3b8">未配置</span>'}</div>
         <div class="price">报价：${sym}${p.price?Number(p.price).toFixed(2):'未设'}</div>
@@ -3572,6 +4159,16 @@ function setQuoteTerm(val, el){
     quote.tradeTerm = '';
   }
 }
+// 报价条款勾选组按 DB.tradeTerms 动态渲染（新增/删除条款后保持一致）
+function renderQuoteTermsUI(){
+  const grp = document.getElementById('quoteTradeTerms');
+  if(!grp) return;
+  const list = Array.isArray(DB.tradeTerms) ? DB.tradeTerms.slice() : DEFAULT_TRADE_TERMS.slice();
+  if(quote && quote.tradeTerm && !list.includes(quote.tradeTerm)) list.unshift(quote.tradeTerm);  // 历史草稿兜底
+  grp.innerHTML = list.length
+    ? list.map(v=>`<label class="chk-inline"><input type="checkbox" value="${esc(v)}" ${quote && quote.tradeTerm===v?'checked':''} onchange="setQuoteTerm('${esc(v)}',this)"> ${esc(v)}</label>`).join('')
+    : '<span style="font-size:12.5px;color:var(--muted)">暂无条款选项，可在产品编辑弹窗的「交货条款」中新增</span>';
+}
 // 将 quote 中的条款/含税/备注同步回表单控件
 function syncQuoteTermsUI(){
   const grp = document.getElementById('quoteTradeTerms');
@@ -3587,6 +4184,7 @@ function clearQuoteTermsUI(){
   const r = document.getElementById('quoteRemark'); if(r) r.value='';
 }
 function renderQuoteSelectors(){
+  renderQuoteTermsUI();   // 报价条款勾选项跟随「交货条款」选项列表
   const cs = document.getElementById('qCustomer');
   const cur = cs.value;
   cs.innerHTML = '<option value="">选择客户…</option>' + DB.customers.map(c=>`<option value="${c.id}" ${c.id===cur?'selected':''}>${esc(c.name)}</option>`).join('');
@@ -3961,10 +4559,11 @@ async function importData(ev){
       if(imgPayload.length) await putAllImages(imgPayload).catch(()=>{});   // 回写图片
       if(packPayload.length) await putAllPackFiles(packPayload).catch(()=>{});   // 回写包装文件
       // 合并：以导入文件为准，但缺字段（如只有产品、没有客户/类型）时保留当前值，避免误清空
-      const merged = Object.assign({types:[],products:[],customers:[]}, dbPayload);
-      if(!dbPayload.types && DB.types && DB.types.length) merged.types = DB.types;
-      if(!dbPayload.customers && DB.customers && DB.customers.length) merged.customers = DB.customers;
-      DB = merged;
+      const merged = Object.assign({products:[],customers:[]}, dbPayload);
+      ['types','tradeTerms','salesUnits','customers'].forEach(k=>{
+        if(!Array.isArray(dbPayload[k]) && Array.isArray(DB[k]) && DB[k].length) merged[k] = DB[k];
+      });
+      DB = normalizeDB(merged);
       migrateDB();   // 兼容旧备份：把全局产品/规则折叠为按客户隔离
       save(); renderProducts(); renderCustomers(); renderQuoteSelectors(); toast('导入成功');
       gcImages().catch(()=>{});   // 清理导入后不再被引用的旧图片/包装文件实体
@@ -3976,7 +4575,7 @@ async function importData(ev){
 function clearAll(){
   if(!confirm('确认清空所有数据？\n（清空前会自动留存一份「保护快照」，可随时从「恢复自动备份」找回）')) return;
   snapshotBeforeDestructive();
-  DB = {types:['门锁','挂锁','抽屉锁','执手锁','智能锁','五金配件'], products:[], customers:[]};
+  DB = normalizeDB({});   // 选项列表一并恢复默认
   save(); renderProducts(); renderCustomers(); toast('已清空');
 }
 
@@ -4004,6 +4603,7 @@ initSelectArrows();                     // 绑定「类型 / 所属客户」下�
 // 显式激活默认 tab，确保即使浏览器缓存导致初始 active 类丢失，产品库面板也能显示
 try{ switchTab('products'); }catch(err){ console.error('初始化切换产品库失败', err); }
 try{ renderProducts(); }catch(err){ console.error('renderProducts 初始化失败', err); }
+try{ initColResize(); }catch(err){ console.error('列宽初始化失败', err); }   // 列表渲染完再量列宽，量到的才是自然宽度
 try{ renderCustomers(); }catch(err){ console.error('renderCustomers 初始化失败', err); }
 try{ renderQuoteSelectors(); loadQuoteDraft(); renderQuote(); }catch(err){ console.error('报价单初始化失败', err); }
 try{ refreshBakInfo(); }catch(err){}
