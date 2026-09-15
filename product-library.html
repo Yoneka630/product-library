@@ -527,7 +527,7 @@
     <div class="brand" data-page-node-id="MAYRjmz2R94fupFbdijC1C">
       <div class="logo" data-page-node-id="QNnUylgUKmDlDlgKJO3JMX">锁</div>
       <div data-page-node-id="Vt43R8ON0dGcKN3ANHBr8q">
-        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.20</small></h1>
+        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.21</small></h1>
       </div>
     </div>
 
@@ -812,8 +812,9 @@
   <div class="panel" id="panel-system">
     <div class="card">
       <h2>系统版本 <span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:6px">更新记录</span></h2>
-      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.20</span></div>
+      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.21</span></div>
       <ul class="changelog-list">
+        <li><b>批量导入产品扩列至 11 列（新增成本 / 包装方式 / 报价条款）</b>：网页内批量导入表格在原来 8 列基础上新增「<b>成本</b>（数字）、<b>包装方式</b>（带历史值下拉，如彩盒/白盒/双泡壳）、<b>报价条款</b>（下拉，EXW/FOB/CIF/CFR/DDP/FCA/其他，自动识别 Key 或中文标签）三列，均为可选——填了即写入该产品的成本 / 包装方式 / 报价条款，留空则保持默认。粘贴 Excel/CSV 的「解析并填入」同步支持按表头或位置识别这 11 列。操作栏「下载模板 / 导入表格」的单表 CSV 也识别这 3 个新表头。<b>顺带修复</b>：此前粘贴框收起后再次点击无法展开的隐患，现已改为每次打开批量导入弹窗时统一重置为收起态，并加固展开/收起逻辑。</li>
         <li><b>新增「数据历史回滚」</b>：操作栏新增「🕘 数据历史」按钮，打开面板可浏览并回滚历史快照。每次保存（内容有变化且距上次≥1分钟）自动留档一份数据快照；也可点「📸 立即保存快照」手动存档。最多保留 <b>30</b> 个，超出自动丢弃最旧。每条快照记录时间、类型、数据量（客户/产品/配置/规则）、体积，并支持单条删除与「清空历史」。还原即把该时间点的全部业务数据（产品/客户/类型/配置/规则）整体覆盖回当前库，<b>产品图按 id 引用、还原后自动挂回 IndexedDB</b>，不重复占用空间。快照实体存 IndexedDB 的 <code>history</code> store（随 images/packfiles 同库升级至 v3），不占 localStorage 5MB 配额，30 份全量也不撑爆。</li>
         <li><b>产品导入简化为单一 8 列表格（双入口）</b>：新增产品不再依赖多 sheet Excel 模板。① 产品库操作栏新增「⬆ 批量导入产品」按钮，打开网页内可直接填写的 8 列表格（<b>所属客户 / 产品SKU / 铁神型号 / 类型 / 订购状态 / 报价 / MOQ / 产品图</b>），支持手填、从 Excel 复制粘贴自动分列、添加/删除行、实时预览「新增/更新/缺必填」数量，确认即导入；所属客户不存在时自动创建，订购状态（已订购/仅报价）、MOQ 一并写入。②「下载模板 / 导入表格」改为单表 CSV（8 列），导入逻辑识别这 8 列并兼容旧表头（型号/名称/客户型号/单价）。产品图列导入阶段留空，导入后到产品详情单独上传；其余字段（描述、配置项、包装、外贸信息等）均可后续在编辑中补充。</li>
         <li><b>工作台改为铺满屏幕 + 修复列宽拖拽后表头与数据不同轴</b>：去掉页面原先 <code>max-width:1400px</code> 的居中上限，工作台宽度直接等于视口宽度——宽屏上不再左右留白，产品表格拿到全部可用宽度，列多也不会被挤到换行。同时把表头 <code>&lt;th&gt;</code> 的左右内边距恢复成与单元格完全一致（此前为给拖拽手柄留位多加了右侧内边距，导致表头文字相对列轴偏移 2px），现在表头文字与列内数据严格同轴居中；表格超宽时仍只在表格容器内横向滚动，不会带动整页出现横向滚动条。</li>
@@ -1005,7 +1006,7 @@
     <div class="modal-body-wrap">
       <div class="modal-body">
         <div style="background:var(--soft);border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:10px 12px;font-size:13px;color:var(--text);margin-bottom:10px;line-height:1.6">
-          仅需填写以下 <b>8 列核心字段</b>，其余信息（描述、配置项、图片、包装、外贸等）导入后可在产品详情补充。<b>产品图列可留空</b>，导入后到产品详情单独上传。
+          仅需填写以下 <b>11 列字段</b>：前 8 列为核心（所属客户 / 产品SKU / 铁神型号 / 类型 / 订购状态 / 报价 / MOQ / 产品图），<b>成本、包装方式、报价条款</b> 为可选补充列（填了即写入该产品）。其余信息（描述、配置项、产品图、包装文件、外贸等）导入后可在产品详情补充。<b>产品图列可留空</b>，导入后到产品详情单独上传。
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
           <button class="btn sm" onclick="biAddRows(5)">+ 添加 5 行</button>
@@ -1032,6 +1033,9 @@
               <th style="min-width:80px">报价</th>
               <th style="min-width:70px">MOQ</th>
               <th style="min-width:100px">产品图</th>
+              <th style="min-width:78px">成本</th>
+              <th style="min-width:120px">包装方式</th>
+              <th style="min-width:110px">报价条款</th>
               <th style="width:34px"></th>
             </tr></thead>
             <tbody id="biBody"></tbody>
@@ -1048,6 +1052,7 @@
 </div>
 <datalist id="biCustomers"></datalist>
 <datalist id="biTypes"></datalist>
+<datalist id="biPackStyles"></datalist>
 
 <!-- 数据历史回滚弹窗 -->
 <div class="modal-mask" id="historyModal">
@@ -4074,6 +4079,19 @@ function parseMoq(v){
   const n = Number(String(s).replace(/[^\d.]/g,''));
   return (isFinite(n) && n>0) ? n : '';
 }
+function parseCost(v){
+  const s = String(v==null?'':v).trim();
+  if(!s) return '';
+  const n = Number(String(s).replace(/[^\d.]/g,''));
+  return (isFinite(n) && n>=0) ? n : '';
+}
+function normalizeTradeTerm(v){
+  const s = String(v==null?'':v).trim();
+  if(!s) return '';
+  if(TRADE_TERM_LABELS[s]) return s;                              // 直接是 KEY（EXW/FOB…）
+  for(const k in TRADE_TERM_LABELS){ if(TRADE_TERM_LABELS[k]===s) return k; }  // 是中文标签
+  return s;                                                       // 未知则原样保存
+}
 function importProducts(rows, head, opts){
   opts = opts || {};
   const autoCust = !!opts.autoCreateCustomer;
@@ -4086,6 +4104,9 @@ function importProducts(rows, head, opts){
   const iPrice= findColIdx(head, ['报价','单价','价格','Price']);
   const iOrdered = findColIdx(head, ['订购状态','订购','状态','Ordered']);
   const iMoq  = findColIdx(head, ['MOQ','moq','最小起订量','起订量']);
+  const iCost = findColIdx(head, ['成本','单价成本','Cost']);
+  const iPack = findColIdx(head, ['包装方式','包装','Pack Style','Pack','包装类型']);
+  const iTrade= findColIdx(head, ['报价条款','交货条款','贸易条款','Trade Term','Incoterm']);
   // 产品图列：文本导入无法携带二进制，导入阶段留空，导入后到产品详情单独上传
   let n=0, upd=0, newCust=0;
   const curCid = (document.getElementById('customerFilter')||{}).value || '';
@@ -4111,6 +4132,9 @@ function importProducts(rows, head, opts){
     const price=(iPrice>=0?String(r[iPrice]||'').trim():'');
     const ordered = iOrdered>=0 ? parseOrdered(r[iOrdered]) : false;
     const moq = iMoq>=0 ? parseMoq(r[iMoq]) : '';
+    const cost = iCost>=0 ? parseCost(r[iCost]) : '';
+    const packStyle = iPack>=0 ? String(r[iPack]||'').trim() : '';
+    const tradeTerm = iTrade>=0 ? normalizeTradeTerm(r[iTrade]) : '';
     const ex=DB.products.find(p=>p.code===code && p.customerId===customerId);
     if(ex){
       ex.name=name; ex.type=type;
@@ -4119,13 +4143,22 @@ function importProducts(rows, head, opts){
       if(price) ex.price=price;
       ex.ordered=ordered;
       if(moq!=='') ex.moq=moq;
+      if(cost!=='') ex.cost=cost;
+      if(packStyle){ ex.pack = ex.pack || emptyPack(); ex.pack.packStyle = packStyle; }
+      if(tradeTerm) ex.tradeTerm = tradeTerm;
       upd++;
     } else {
-      DB.products.push({id:uid(), code, name, customerId,
+      const np = {id:uid(), code, name, customerId,
         clientSku:(iSku>=0?String(r[iSku]||'').trim():''),
         type, desc:(iDesc>=0?String(r[iDesc]||'').trim():''),
-        price:price||'', ordered, moq, images:[], configs:[],
-        createdAt: fmtNow(), updatedAt: fmtNow()});
+        price:price||'', ordered, moq,
+        cost: cost||'',
+        tradeTerm: tradeTerm||'',
+        pack: emptyPack(),
+        images:[], configs:[],
+        createdAt: fmtNow(), updatedAt: fmtNow()};
+      if(packStyle) np.pack.packStyle = packStyle;
+      DB.products.push(np);
       n++;
     }
   }
@@ -4137,15 +4170,25 @@ function importProducts(rows, head, opts){
 // ============ 网页内「批量导入产品」单表录入 ============
 function openBatchImport(){
   refreshBiDatalist();
-  biClear(); biAddRows(5);
+  biClear(); biAddRows(5); biTogglePaste(false);
   document.getElementById('batchImportModal').classList.add('show');
   biUpdateStat();
 }
 function refreshBiDatalist(){
   const c = document.getElementById('biCustomers'); if(c) c.innerHTML = DB.customers.map(x=>`<option value="${esc(x.name)}">`).join('');
   const t = document.getElementById('biTypes'); if(t) t.innerHTML = DB.types.map(x=>`<option value="${esc(x)}">`).join('');
+  const ps = document.getElementById('biPackStyles'); if(ps){
+    const set = new Set();
+    (DB.products||[]).forEach(p=>{ const s=p&&p.pack&&p.pack.packStyle; if(s) set.add(s); });
+    (DB.configs||[]).forEach(g=>{ if(g&&g.name==='包装') (g.options||[]).forEach(o=>set.add(o)); });
+    ps.innerHTML = Array.from(set).map(s=>`<option value="${esc(s)}">`).join('');
+  }
 }
 function biRowHtml(){
+  const tradeTerms = (Array.isArray(DB.tradeTerms) ? DB.tradeTerms : DEFAULT_TRADE_TERMS.slice());
+  const tradeOpts = ['<option value="">— 未设 —</option>'].concat(
+    tradeTerms.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`)
+  ).join('');
   return `<tr class="bi-row">
     <td><input class="bi-cust" list="biCustomers" placeholder="客户名"></td>
     <td><input class="bi-code" placeholder="YS-8801"></td>
@@ -4155,6 +4198,9 @@ function biRowHtml(){
     <td><input class="bi-price" type="number" step="0.01" min="0" placeholder="0.00"></td>
     <td><input class="bi-moq" type="number" step="1" min="0" placeholder="0"></td>
     <td><input class="bi-img" placeholder="可留空"></td>
+    <td><input class="bi-cost" type="number" step="0.01" min="0" placeholder="0.00"></td>
+    <td><input class="bi-pack" list="biPackStyles" placeholder="彩盒/白盒"></td>
+    <td><select class="bi-trade">${tradeOpts}</select></td>
     <td><button class="bi-del" onclick="biRemoveRow(this)" title="删除该行" style="border:none;background:transparent;color:#c0392b;cursor:pointer;font-size:16px">×</button></td>
   </tr>`;
 }
@@ -4165,7 +4211,11 @@ function biAddRows(n){
 }
 function biClear(){ document.getElementById('biBody').innerHTML=''; const p=document.getElementById('biPreview'); if(p) p.textContent=''; biUpdateStat(); }
 function biRemoveRow(btn){ const tr=btn.closest('tr'); if(tr) tr.remove(); biUpdateStat(); }
-function biTogglePaste(){ const w=document.getElementById('biPasteWrap'); w.style.display = w.style.display==='none'?'block':'none'; }
+function biTogglePaste(force){
+  const w=document.getElementById('biPasteWrap'); if(!w) return;
+  const show = (force===true) ? true : (force===false ? false : (w.style.display!=='block'));
+  w.style.display = show ? 'block' : 'none';
+}
 function biUpdateStat(){
   const rows=biRows();
   const stat=document.getElementById('biStat');
@@ -4192,7 +4242,7 @@ function biPreview(){
   document.getElementById('biPreview').textContent = `预览：新增 ${add} · 更新 ${upd} · 缺必填(产品SKU/铁神型号) ${err}`;
 }
 function biImport(){
-  const head=['所属客户','产品SKU','铁神型号','类型','订购状态','报价','MOQ','产品图'];
+  const head=['所属客户','产品SKU','铁神型号','类型','订购状态','报价','MOQ','产品图','成本','包装方式','报价条款'];
   const rows=biRows();
   if(!rows.length){ toast('没有可导入的数据'); return; }
   // importProducts 约定 rows[0] 为表头，故把 head 拼回第 0 行，保证纯数据行从 i=1 起逐行处理
@@ -4212,14 +4262,14 @@ function biParsePaste(){
   const grid = delim==='\t' ? lines.map(l=>l.split('\t')) : parseCsv(text);
   if(!grid.length){ toast('未解析到内容'); return; }
   const head = grid[0].map(s=>String(s).trim());
-  const known=['产品SKU','铁神型号','所属客户','类型','订购状态','报价','MOQ','产品图'];
+  const known=['产品SKU','铁神型号','所属客户','类型','订购状态','报价','MOQ','产品图','成本','包装方式','报价条款'];
   const isHead = head.some(h=>known.includes(h));
   const dataRows = isHead ? grid.slice(1) : grid;
   let colMap;
   if(isHead){
-    colMap = ['所属客户','产品SKU','铁神型号','类型','订购状态','报价','MOQ','产品图'].map(h=>head.indexOf(h));
+    colMap = ['所属客户','产品SKU','铁神型号','类型','订购状态','报价','MOQ','产品图','成本','包装方式','报价条款'].map(h=>head.indexOf(h));
   } else {
-    colMap = [0,1,2,3,4,5,6,7];
+    colMap = [0,1,2,3,4,5,6,7,8,9,10];
   }
   const mapped = dataRows.map(r => colMap.map(i => (i>=0 && r[i]!=null) ? String(r[i]).trim() : ''));
   biSetRows(mapped);
@@ -4228,9 +4278,16 @@ function biParsePaste(){
 }
 function biSetRows(dataRows){
   const body=document.getElementById('biBody');
+  const tradeTerms = (Array.isArray(DB.tradeTerms) ? DB.tradeTerms : DEFAULT_TRADE_TERMS.slice());
   body.innerHTML = dataRows.map(r=>{
-    const v = r.concat(Array(8).fill('')).slice(0,8);
+    const v = r.concat(Array(11).fill('')).slice(0,11);
     const ord = /^(已订购|是|yes|true|1|✓|订购)/i.test(v[4]||'') ? '已订购' : '仅报价、未订购';
+    const cost = (v[8]||'').trim();
+    const pack = (v[9]||'').trim();
+    const trade = (v[10]||'').trim();
+    const tradeOpts = ['<option value="">— 未设 —</option>'].concat(
+      tradeTerms.map(t=>{ const sel = (t===trade)?' selected':''; return `<option value="${esc(t)}"${sel}>${esc(t)}</option>`; })
+    ).join('');
     return `<tr class="bi-row">
       <td><input class="bi-cust" list="biCustomers" value="${esc(v[0])}"></td>
       <td><input class="bi-code" value="${esc(v[1])}"></td>
@@ -4240,6 +4297,9 @@ function biSetRows(dataRows){
       <td><input class="bi-price" type="number" step="0.01" min="0" value="${esc(v[5])}"></td>
       <td><input class="bi-moq" type="number" step="1" min="0" value="${esc(v[6])}"></td>
       <td><input class="bi-img" value="${esc(v[7])}"></td>
+      <td><input class="bi-cost" type="number" step="0.01" min="0" value="${esc(cost)}"></td>
+      <td><input class="bi-pack" list="biPackStyles" value="${esc(pack)}"></td>
+      <td><select class="bi-trade">${tradeOpts}</select></td>
       <td><button class="bi-del" onclick="biRemoveRow(this)" title="删除该行" style="border:none;background:transparent;color:#c0392b;cursor:pointer;font-size:16px">×</button></td>
     </tr>`;
   }).join('');
@@ -4850,9 +4910,9 @@ function printQuote(){
 
 function downloadTemplate(){
   try{
-    // 单一产品导入表：仅 8 个核心字段，其余信息导入后到产品详情补充
-    const head = ['所属客户','产品SKU','铁神型号','类型','订购状态','报价','MOQ','产品图'];
-    const sample = ['德国 Müller GmbH','YS-8801','不锈钢执手门锁','门锁','仅报价、未订购','68.50','100',''];
+    // 单一产品导入表：8 个核心字段 + 成本/包装方式/报价条款（可选），其余信息导入后到产品详情补充
+    const head = ['所属客户','产品SKU','铁神型号','类型','订购状态','报价','MOQ','产品图','成本','包装方式','报价条款'];
+    const sample = ['德国 Müller GmbH','YS-8801','不锈钢执手门锁','门锁','仅报价、未订购','68.50','100','','55.00','彩盒','FOB'];
     const esc = s => { s=String(s); return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
     const csv = '﻿' + [head, sample].map(r=>r.map(esc).join(',')).join('\r\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
