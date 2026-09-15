@@ -527,7 +527,7 @@
     <div class="brand" data-page-node-id="MAYRjmz2R94fupFbdijC1C">
       <div class="logo" data-page-node-id="QNnUylgUKmDlDlgKJO3JMX">锁</div>
       <div data-page-node-id="Vt43R8ON0dGcKN3ANHBr8q">
-        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.18</small></h1>
+        <h1 data-page-node-id="69ALY7hNbnOkcE6Fjpmkao">产品库 <small class="ver" data-page-node-id="8sLpaAByxZfYLVOpdUt3lb">v2026.10.20</small></h1>
       </div>
     </div>
 
@@ -606,6 +606,8 @@
           <button class="btn" onclick="exportCustomer('pdf')" data-page-node-id="lIOwQ1bMp3RgIiVERNL1Et">⬇ 导出PDF</button>
           <button class="btn" onclick="document.getElementById('csvFile').click()" data-page-node-id="iaUs2wIMKGI4kLDpOtPkax">导入表格</button>
           <button class="btn ghost" onclick="downloadTemplate()" data-page-node-id="YAXInfeuXgMNKaYvREjA74">下载模板</button>
+          <button class="btn primary" onclick="openBatchImport()" data-page-node-id="biOpenBtn" title="用单个 8 列表格批量导入产品（所属客户/产品SKU/铁神型号/类型/订购状态/报价/MOQ/产品图）">⬆ 批量导入产品</button>
+          <button class="btn" onclick="openHistory()" data-page-node-id="histBtn" title="查看并回滚历史数据快照（每次保存自动留档）">🕘 数据历史</button>
           <input type="file" id="csvFile" accept=".xlsx,.xlsm,.csv,.txt" style="display:none" onchange="importFile(event)" data-page-node-id="jS0MpFB3GyPNHIFH62plDh">
         </div>
       </div>
@@ -810,8 +812,10 @@
   <div class="panel" id="panel-system">
     <div class="card">
       <h2>系统版本 <span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:6px">更新记录</span></h2>
-      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.18</span></div>
+      <div style="margin:10px 0 4px"><span class="ver-badge">当前版本 v2026.10.20</span></div>
       <ul class="changelog-list">
+        <li><b>新增「数据历史回滚」</b>：操作栏新增「🕘 数据历史」按钮，打开面板可浏览并回滚历史快照。每次保存（内容有变化且距上次≥1分钟）自动留档一份数据快照；也可点「📸 立即保存快照」手动存档。最多保留 <b>30</b> 个，超出自动丢弃最旧。每条快照记录时间、类型、数据量（客户/产品/配置/规则）、体积，并支持单条删除与「清空历史」。还原即把该时间点的全部业务数据（产品/客户/类型/配置/规则）整体覆盖回当前库，<b>产品图按 id 引用、还原后自动挂回 IndexedDB</b>，不重复占用空间。快照实体存 IndexedDB 的 <code>history</code> store（随 images/packfiles 同库升级至 v3），不占 localStorage 5MB 配额，30 份全量也不撑爆。</li>
+        <li><b>产品导入简化为单一 8 列表格（双入口）</b>：新增产品不再依赖多 sheet Excel 模板。① 产品库操作栏新增「⬆ 批量导入产品」按钮，打开网页内可直接填写的 8 列表格（<b>所属客户 / 产品SKU / 铁神型号 / 类型 / 订购状态 / 报价 / MOQ / 产品图</b>），支持手填、从 Excel 复制粘贴自动分列、添加/删除行、实时预览「新增/更新/缺必填」数量，确认即导入；所属客户不存在时自动创建，订购状态（已订购/仅报价）、MOQ 一并写入。②「下载模板 / 导入表格」改为单表 CSV（8 列），导入逻辑识别这 8 列并兼容旧表头（型号/名称/客户型号/单价）。产品图列导入阶段留空，导入后到产品详情单独上传；其余字段（描述、配置项、包装、外贸信息等）均可后续在编辑中补充。</li>
         <li><b>工作台改为铺满屏幕 + 修复列宽拖拽后表头与数据不同轴</b>：去掉页面原先 <code>max-width:1400px</code> 的居中上限，工作台宽度直接等于视口宽度——宽屏上不再左右留白，产品表格拿到全部可用宽度，列多也不会被挤到换行。同时把表头 <code>&lt;th&gt;</code> 的左右内边距恢复成与单元格完全一致（此前为给拖拽手柄留位多加了右侧内边距，导致表头文字相对列轴偏移 2px），现在表头文字与列内数据严格同轴居中；表格超宽时仍只在表格容器内横向滚动，不会带动整页出现横向滚动条。</li>
         <li><b>产品列表列宽可拖拽调整并自动记忆</b>：表头每列右缘新增拖拽手柄，按住拖动即可调整列宽（从相邻列「借/还」空间，总宽不变、整表不跳动，每列有最小宽度保护）；<b>双击手柄</b>可把该列恢复默认，操作栏新增「↺ 列宽」一键全部还原。调整结果自动存入浏览器本地（键 <code>lock_product_library_colw_v1</code>），下次打开自动还原；列宽属于设备本地偏好，不写入数据库，因此不参与 S3 同步与备份导入导出。表格在列宽总和超过容器时自动横向滚动，窄于容器时仍保持 100% 自适应。</li>
         <li><b>批量工具新增「订购状态」一键修改</b>：批量工具弹窗改为标签页（<b>订购状态</b> / 查找替换）。「订购状态」页可按范围（全部产品 / 指定客户 / 仅列表中已勾选的产品）把订购状态一键设为「已订购」或「仅报价、未订购」；应用前先「预览影响」逐条列出将变更与保持不变的产品，二次确认后只改动状态确实不同的产品并刷新其「更新时间」。产品列表勾选后另新增「✓ 设为已订购 / ↺ 设为未订购」两枚快捷按钮，选中即改。<b>操作仅作用于本地数据，建议先「导出备份」以便撤销。</b></li>
@@ -985,6 +989,96 @@
       <button class="btn danger" id="productDeleteBtn" style="margin-right:auto;display:none" onclick="deleteProductFromModal()" data-page-node-id="cfQpF0Y2INNjo0k14XmF3e">删除产品</button>
       <button class="btn" id="productCancelBtn" onclick="closeModal('productModal')" data-page-node-id="7nIbdsk9Z13LYx8qGePjdA">取消</button>
       <button class="btn primary" id="productSaveBtn" onclick="saveProduct()" data-page-node-id="5JLOViPlc1yqzVbFDBYSkD">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 批量导入产品（简化单表 8 列） -->
+<div class="modal-mask" id="batchImportModal">
+  <div class="modal" style="width:min(1080px,96vw)">
+    <div class="modal-head">
+      <h3>批量导入产品</h3>
+      <div class="head-actions">
+        <button class="btn ghost" onclick="closeModal('batchImportModal')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body-wrap">
+      <div class="modal-body">
+        <div style="background:var(--soft);border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:10px 12px;font-size:13px;color:var(--text);margin-bottom:10px;line-height:1.6">
+          仅需填写以下 <b>8 列核心字段</b>，其余信息（描述、配置项、图片、包装、外贸等）导入后可在产品详情补充。<b>产品图列可留空</b>，导入后到产品详情单独上传。
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+          <button class="btn sm" onclick="biAddRows(5)">+ 添加 5 行</button>
+          <button class="btn sm" onclick="biClear()">清空</button>
+          <button class="btn sm" onclick="biTogglePaste()">粘贴 Excel/CSV</button>
+          <button class="btn sm ghost" onclick="downloadTemplate()">下载模板</button>
+          <span id="biStat" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+        <div id="biPasteWrap" style="display:none;margin:8px 0">
+          <textarea id="biPaste" placeholder="从 Excel 复制区域粘贴（Tab 分隔），或粘贴 CSV 文本。若首行是表头则自动识别列。" style="width:100%;height:96px;font-family:monospace;padding:8px"></textarea>
+          <div style="margin-top:6px;display:flex;gap:8px">
+            <button class="btn sm primary" onclick="biParsePaste()">解析并填入</button>
+            <button class="btn sm" onclick="biTogglePaste()">收起</button>
+          </div>
+        </div>
+        <div class="tbl-wrap" style="max-height:44vh;overflow:auto">
+          <table class="ptbl" id="biTable">
+            <thead><tr>
+              <th style="min-width:140px">所属客户</th>
+              <th style="min-width:110px">产品SKU</th>
+              <th>铁神型号</th>
+              <th style="min-width:90px">类型</th>
+              <th style="min-width:120px">订购状态</th>
+              <th style="min-width:80px">报价</th>
+              <th style="min-width:70px">MOQ</th>
+              <th style="min-width:100px">产品图</th>
+              <th style="width:34px"></th>
+            </tr></thead>
+            <tbody id="biBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span id="biPreview" style="margin-right:auto;font-size:13px;color:var(--brand)"></span>
+      <button class="btn" onclick="biPreview()">导入预览</button>
+      <button class="btn primary" id="biImportBtn" onclick="biImport()">确认导入</button>
+    </div>
+  </div>
+</div>
+<datalist id="biCustomers"></datalist>
+<datalist id="biTypes"></datalist>
+
+<!-- 数据历史回滚弹窗 -->
+<div class="modal-mask" id="historyModal">
+  <div class="modal" style="width:min(720px,96vw)">
+    <div class="modal-head">
+      <h3>数据历史回滚</h3>
+      <div class="head-actions">
+        <button class="btn ghost" onclick="closeHistory()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body-wrap">
+      <div style="background:var(--soft);border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:10px 12px;font-size:13px;color:var(--text);margin-bottom:10px;line-height:1.6">
+        每次保存（内容有变化且距上次≥1分钟）会自动留档；也可点「📸 立即保存快照」手动存档。最多保留 <b>30</b> 个，超出自动丢弃最旧。单个快照仅含数据文本，产品图按 id 引用、还原后自动挂回。点击「还原」可回滚到该时间点。
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+        <button class="btn sm primary" onclick="manualSnapshot()">📸 立即保存快照</button>
+        <button class="btn sm" onclick="clearHistory()">清空历史</button>
+        <span id="historyStat" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+      <div class="tbl-wrap" style="max-height:46vh;overflow:auto">
+        <table class="ptbl" id="historyTable">
+          <thead><tr>
+            <th style="min-width:150px">时间</th>
+            <th style="min-width:90px">类型</th>
+            <th>数据量</th>
+            <th style="min-width:70px">体积</th>
+            <th style="min-width:140px">操作</th>
+          </tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -1173,6 +1267,7 @@
 const LS_KEY = 'lock_product_library_v1';
 const LS_BAK = 'lock_product_library_bak_v1';      // 最近一次自动备份（每次保存更新）
 const LS_PRE = 'lock_product_library_pre_v1';      // 破坏性操作（导入/清空）前的保护快照
+const LS_HISTORY = 'lock_product_library_history_v1'; // 历史快照开关/元信息（快照实体存 IndexedDB history store）
 const LS_QUOTE = 'lock_product_library_quote_v1';  // 当前报价单草稿
 let firstRun = false;        // 真正首次：localStorage 中无该键
 let dataCorrupted = false;   // 有键但解析/结构异常
@@ -1219,13 +1314,17 @@ function load(){
   }
 }
 function save(){
+  let raw = '';
   try{
-    localStorage.setItem(LS_KEY, JSON.stringify(DB));
+    raw = JSON.stringify(DB);
+    localStorage.setItem(LS_KEY, raw);
     // 自动备份：仅在“确有数据”时写入/刷新快照，避免一次空保存把原本可用的好备份覆盖成空
     try{
       const hasData = (DB.customers && DB.customers.length) || (DB.products && DB.products.length);
       if(hasData) snapshotAutoBak();   // 异步打包图片写备份，不阻塞主存
     }catch(e){ /* 备份失败不影响主存 */ }
+    // 数据历史快照（去重+节流，异步写 IndexedDB，不阻塞主存）
+    try{ pushHistorySnapshot(raw); }catch(_e){}
   }
   catch(e){
     // file:// 或配额写满时 setItem 会抛异常；这里捕获，避免阻断后续（如关闭弹窗）操作
@@ -1270,6 +1369,107 @@ function refreshBakInfo(){
     el.textContent = t;
   }catch(e){ el.textContent = ''; }
 }
+
+// ============ 数据历史回滚 ============
+// 设计：每次 save()（内容有变化且距上次≥1分钟）自动留档一份 DB 快照，存 IndexedDB history store。
+// 产品图已按 id 存于 images store，快照只存 DB 文本（含 images 的 id 列表），还原后自动挂回，不重复占用空间。
+// 上限：最多 30 个（环形覆盖最旧）；因存 IndexedDB，不占 localStorage 5MB 配额。
+const HISTORY_MAX = 30;
+const HISTORY_THROTTLE_MS = 60000;   // 同内容至少间隔 60s 才再留档，避免编辑高频触发刷屏
+let _lastSnapHash = '';
+let _lastSnapAt = 0;
+function _dbHash(s){ // FNV-1a 轻量哈希，做去重用，不存大段摘要
+  let h = 0x811c9dc5;
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return (h>>>0).toString(16);
+}
+function _snapTimeStr(ms){
+  const d = new Date(ms); const p = n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+// raw 为 JSON.stringify(DB) 的结果（save 时已有，复用避免重复序列化）
+function pushHistorySnapshot(raw, opts){
+  opts = opts || {};
+  try{
+    const hash = _dbHash(raw);
+    const now = Date.now();
+    if(!opts.force && hash === _lastSnapHash) return;                 // 内容无变化 → 不重复留档
+    if(!opts.force && (now - _lastSnapAt) < HISTORY_THROTTLE_MS) return; // 节流：太短时间内忽略
+    const rec = {
+      id: uid(),
+      at: now,
+      atStr: new Date().toISOString(),
+      label: opts.label || '自动快照',
+      counts: {
+        customers: (DB.customers||[]).length,
+        products: (DB.products||[]).length,
+        configs: (DB.configs||[]).length,
+        rules: (DB.rules||[]).length
+      },
+      size: raw.length,
+      db: JSON.parse(raw)   // 深拷贝，避免后续改动污染已存快照
+    };
+    _lastSnapHash = hash; _lastSnapAt = now;
+    putHistory(rec).catch(()=>{});   // 异步写 IndexedDB，失败不影响主流程
+  }catch(e){ /* 历史留档异常不阻断保存 */ }
+}
+function openHistory(){ renderHistory(); document.getElementById('historyModal').classList.add('show'); }
+function closeHistory(){ document.getElementById('historyModal').classList.remove('show'); }
+async function manualSnapshot(){
+  const raw = JSON.stringify(DB);
+  _lastSnapAt = 0;   // 手动存档绕过节流
+  await pushHistorySnapshot(raw, {force:true, label:'手动快照'});
+  await renderHistory();
+  toast('已保存当前状态快照');
+}
+async function renderHistory(){
+  const tbody = document.getElementById('historyBody'); if(!tbody) return;
+  let arr;
+  try{ arr = await getAllHistory(); }catch(e){ arr = []; }
+  arr.sort((a,b)=> b.at - a.at);
+  const stat = document.getElementById('historyStat');
+  if(stat) stat.textContent = arr.length ? `共 ${arr.length} 条快照` : '';
+  if(!arr.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:18px">暂无历史快照。每次保存（内容有变化且间隔≥1分钟）会自动留档；也可点「📸 立即保存快照」手动存档。</td></tr>';
+    return;
+  }
+  tbody.innerHTML = arr.map(s=>{
+    const c = s.counts||{};
+    const cnt = `客户 ${c.customers||0} · 产品 ${c.products||0} · 配置 ${c.configs||0} · 规则 ${c.rules||0}`;
+    return `<tr data-sid="${s.id}">
+      <td style="white-space:nowrap">${esc(_snapTimeStr(s.at))}</td>
+      <td>${esc(s.label||'自动快照')}</td>
+      <td style="color:var(--muted);font-size:12px">${cnt}</td>
+      <td style="color:var(--muted);font-size:12px">${s.size? (s.size/1024).toFixed(0)+'KB':'-'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn sm primary" onclick="restoreHistory('${s.id}')">还原</button>
+        <button class="btn sm" onclick="delOneHistory('${s.id}')">删除</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+async function restoreHistory(id){
+  let rec=null;
+  try{ rec = (await getAllHistory()).find(x=>x.id===id); }catch(e){}
+  if(!rec){ toast('快照不存在或已被清理'); return; }
+  if(!confirm('即将用【'+esc(rec.label)+' · '+_snapTimeStr(rec.at)+'】恢复数据，当前页面数据将被覆盖，确认继续？')) return;
+  DB = normalizeDB(rec.db);
+  migrateDB();
+  save(); renderProducts(); renderCustomers(); renderQuoteSelectors();
+  toast('已恢复到：'+rec.label);
+  if(document.getElementById('historyModal').classList.contains('show')) await renderHistory();
+}
+async function delOneHistory(id){
+  if(!confirm('确定删除这条历史快照？此操作不可撤销。')) return;
+  await delHistory(id);
+  await renderHistory();
+}
+async function clearHistory(){
+  if(!confirm('确定清空全部历史快照？此操作不可撤销。')) return;
+  await clearHistoryStore();
+  await renderHistory();
+  toast('已清空历史快照');
+}
 // 当前报价单草稿：每次变动自动存，重开页面可恢复（避免关页面丢失未保存报价）
 function saveQuoteDraft(){
   try{
@@ -1298,15 +1498,17 @@ function productsOf(cid){ return (DB.products||[]).filter(p=>p && p.customerId==
 const IMG_DB_NAME = 'product_library_imgdb';
 const IMG_STORE = 'images';
 const PACK_STORE = 'packfiles';
+const HISTORY_STORE = 'history';   // 数据历史回滚快照（仅存 DB 文本，产品图按 id 在 images store 引用）
 let _imgDBPromise = null;
 function openImgDB(){
   if(_imgDBPromise) return _imgDBPromise;
   _imgDBPromise = new Promise((resolve, reject)=>{
     if(!window.indexedDB){ reject(new Error('当前环境不支持 IndexedDB')); return; }
-    const r = indexedDB.open(IMG_DB_NAME, 2);
+    const r = indexedDB.open(IMG_DB_NAME, 3);
     r.onupgradeneeded = ()=>{ const db=r.result;
       if(!db.objectStoreNames.contains(IMG_STORE)) db.createObjectStore(IMG_STORE, {keyPath:'id'});
       if(!db.objectStoreNames.contains(PACK_STORE)) db.createObjectStore(PACK_STORE, {keyPath:'id'});
+      if(!db.objectStoreNames.contains(HISTORY_STORE)) db.createObjectStore(HISTORY_STORE, {keyPath:'id'});
     };
     r.onsuccess = ()=>resolve(r.result);
     r.onerror = ()=>reject(r.error);
@@ -1324,6 +1526,11 @@ async function getPackFile(id){ const db=await openImgDB(); return new Promise((
 async function delPackFile(id){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(PACK_STORE,'readwrite'); tx.objectStore(PACK_STORE).delete(id); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
 async function getAllPackFiles(){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(PACK_STORE,'readonly'); const g=tx.objectStore(PACK_STORE).getAll(); g.onsuccess=()=>res(g.result||[]); g.onerror=()=>rej(g.error); }); }
 async function putAllPackFiles(recs){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(PACK_STORE,'readwrite'); (recs||[]).forEach(r=>tx.objectStore(PACK_STORE).put(r)); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
+// 数据历史回滚：快照记录写入 / 读取 / 删除 / 清空（store 名见 HISTORY_STORE）
+async function putHistory(rec){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(HISTORY_STORE,'readwrite'); tx.objectStore(HISTORY_STORE).put(rec); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
+async function getAllHistory(){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(HISTORY_STORE,'readonly'); const g=tx.objectStore(HISTORY_STORE).getAll(); g.onsuccess=()=>res(g.result||[]); g.onerror=()=>rej(g.error); }); }
+async function delHistory(id){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(HISTORY_STORE,'readwrite'); tx.objectStore(HISTORY_STORE).delete(id); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
+async function clearHistoryStore(){ const db=await openImgDB(); return new Promise((res,rej)=>{ const tx=db.transaction(HISTORY_STORE,'readwrite'); tx.objectStore(HISTORY_STORE).clear(); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
 // 内存缓存：图片 id -> dataUrl，渲染时同步取（避免把渲染函数改成异步）
 const _imgCache = new Map();
 async function loadImages(ids){
@@ -3726,7 +3933,7 @@ function detectCsvKind(head){
   if(has('配置项名') && has('型号')) return 'config';
   if(has('客户名称') && has('产品型号')) return 'rule';
   if(has('客户名称')) return 'customer';
-  if(has('型号') && has('名称')) return 'product';
+  if((has('产品SKU')||has('型号')) && (has('铁神型号')||has('名称'))) return 'product';
   return null;
 }
 
@@ -3797,7 +4004,7 @@ async function importXlsxFile(file){
     if(!s) continue;
     const body = cleanRows(s.rows);
     const head = body[0].map(h => String(h).trim());
-    if(k === 'product')        msgs.push(importProducts(body, head));
+    if(k === 'product')        msgs.push(importProducts(body, head, {autoCreateCustomer:true}));
     else if(k === 'config')    msgs.push(importConfigs(body, head));
     else if(k === 'customer')  msgs.push(importCustomers(body, head));
     else if(k === 'rule')      msgs.push(importRules(body, head));
@@ -3836,7 +4043,7 @@ function importCsvFile(file){
     }
     const body = cleanRows(rows);
     let msg = '';
-    if(kind === 'product')        msg = importProducts(body, head);
+    if(kind === 'product')        msg = importProducts(body, head, {autoCreateCustomer:true});
     else if(kind === 'config')    msg = importConfigs(body, head);
     else if(kind === 'customer')  msg = importCustomers(body, head);
     else if(kind === 'rule')      msg = importRules(body, head);
@@ -3847,10 +4054,40 @@ function importCsvFile(file){
   reader.readAsArrayBuffer(file);
 }
 
-function importProducts(rows, head){
-  const idx = n => head.findIndex(x=>String(x).includes(n));
-  const iCode=idx('型号'), iName=idx('名称'), iSku=idx('客户型号'), iType=idx('类型'), iDesc=idx('描述'), iCust=idx('客户'), iPrice=idx('单价')>=0?idx('单价'):idx('价格');
-  let n=0, upd=0;
+// 列匹配：按候选关键词顺序取第一个匹配列（兼容新旧表头）
+function findColIdx(head, candidates){
+  for(const c of candidates){
+    const i = head.findIndex(x => { const s=String(x||'').trim(); return s===c || s.includes(c); });
+    if(i >= 0) return i;
+  }
+  return -1;
+}
+function parseOrdered(v){
+  const s = String(v==null?'':v).trim().toLowerCase();
+  if(!s) return false;
+  if(/^(已订购|是|yes|y|true|1|✓|订购|ordered)/.test(s)) return true;
+  return false;   // 其余（仅报价/未订购/否/0/空/未设）一律视为未订购
+}
+function parseMoq(v){
+  const s = String(v==null?'':v).trim();
+  if(!s) return '';
+  const n = Number(String(s).replace(/[^\d.]/g,''));
+  return (isFinite(n) && n>0) ? n : '';
+}
+function importProducts(rows, head, opts){
+  opts = opts || {};
+  const autoCust = !!opts.autoCreateCustomer;
+  const iCust = findColIdx(head, ['所属客户','客户名称','客户','Customer']);
+  const iCode = findColIdx(head, ['产品SKU','产品 SKU','SKU','型号','货号','Model','Model No']);
+  const iName = findColIdx(head, ['铁神型号','铁神','产品名称','名称','品名','Name']);
+  const iSku  = findColIdx(head, ['客户型号','Client SKU','客户 sku']);
+  const iType = findColIdx(head, ['类型','锁具类型','Type']);
+  const iDesc = findColIdx(head, ['描述','基础描述','备注','Description']);
+  const iPrice= findColIdx(head, ['报价','单价','价格','Price']);
+  const iOrdered = findColIdx(head, ['订购状态','订购','状态','Ordered']);
+  const iMoq  = findColIdx(head, ['MOQ','moq','最小起订量','起订量']);
+  // 产品图列：文本导入无法携带二进制，导入阶段留空，导入后到产品详情单独上传
+  let n=0, upd=0, newCust=0;
   const curCid = (document.getElementById('customerFilter')||{}).value || '';
   for(let i=1;i<rows.length;i++){
     const r=rows[i];
@@ -3858,28 +4095,154 @@ function importProducts(rows, head){
     const name=String(r[iName]||code).trim();
     const type=String(r[iType]||'五金配件').trim()||'五金配件';
     if(!DB.types.includes(type)) DB.types.push(type);
-    // 归属客户：优先取本行"客户"列；否则取当前列表所选客户；再否则归入第一个客户
+    // 归属客户：本行客户名 → 已存在则匹配，否则（autoCreate 时）自动新建
     let customerId = curCid;
-    if(iCust>=0 && r[iCust]){ const c=DB.customers.find(x=>x.name===String(r[iCust]).trim()); if(c) customerId=c.id; }
-    if(!customerId && DB.customers.length) customerId=DB.customers[0].id;
+    const custName = (iCust>=0 && r[iCust]) ? String(r[iCust]).trim() : '';
+    if(custName){
+      let c = DB.customers.find(x=>x.name===custName);
+      if(!c && autoCust){ c = {id:uid(), name:custName, contact:'', currency:'CNY', quoteHistory:[]}; DB.customers.push(c); newCust++; }
+      if(c) customerId = c.id;
+    }
+    if(!customerId && DB.customers.length) customerId = DB.customers[0].id;
+    if(!customerId){
+      if(autoCust){ const c={id:uid(), name:custName||'默认客户', contact:'', currency:'CNY', quoteHistory:[]}; DB.customers.push(c); newCust++; customerId=c.id; }
+      else continue;
+    }
     const price=(iPrice>=0?String(r[iPrice]||'').trim():'');
+    const ordered = iOrdered>=0 ? parseOrdered(r[iOrdered]) : false;
+    const moq = iMoq>=0 ? parseMoq(r[iMoq]) : '';
     const ex=DB.products.find(p=>p.code===code && p.customerId===customerId);
     if(ex){
       ex.name=name; ex.type=type;
       if(iSku>=0 && r[iSku]) ex.clientSku=String(r[iSku]).trim();
       if(iDesc>=0) ex.desc=String(r[iDesc]||'').trim();
       if(price) ex.price=price;
+      ex.ordered=ordered;
+      if(moq!=='') ex.moq=moq;
       upd++;
     } else {
       DB.products.push({id:uid(), code, name, customerId,
         clientSku:(iSku>=0?String(r[iSku]||'').trim():''),
         type, desc:(iDesc>=0?String(r[iDesc]||'').trim():''),
-        price:price||'', images:[], configs:[],
+        price:price||'', ordered, moq, images:[], configs:[],
         createdAt: fmtNow(), updatedAt: fmtNow()});
       n++;
     }
   }
-  return `产品：新增 ${n} 个，更新 ${upd} 个`;
+  let msg = `产品：新增 ${n} 个，更新 ${upd} 个`;
+  if(newCust) msg += `；新建客户 ${newCust} 个`;
+  return msg;
+}
+
+// ============ 网页内「批量导入产品」单表录入 ============
+function openBatchImport(){
+  refreshBiDatalist();
+  biClear(); biAddRows(5);
+  document.getElementById('batchImportModal').classList.add('show');
+  biUpdateStat();
+}
+function refreshBiDatalist(){
+  const c = document.getElementById('biCustomers'); if(c) c.innerHTML = DB.customers.map(x=>`<option value="${esc(x.name)}">`).join('');
+  const t = document.getElementById('biTypes'); if(t) t.innerHTML = DB.types.map(x=>`<option value="${esc(x)}">`).join('');
+}
+function biRowHtml(){
+  return `<tr class="bi-row">
+    <td><input class="bi-cust" list="biCustomers" placeholder="客户名"></td>
+    <td><input class="bi-code" placeholder="YS-8801"></td>
+    <td><input class="bi-name" placeholder="铁神型号"></td>
+    <td><input class="bi-type" list="biTypes" placeholder="门锁"></td>
+    <td><select class="bi-ord"><option>仅报价、未订购</option><option>已订购</option></select></td>
+    <td><input class="bi-price" type="number" step="0.01" min="0" placeholder="0.00"></td>
+    <td><input class="bi-moq" type="number" step="1" min="0" placeholder="0"></td>
+    <td><input class="bi-img" placeholder="可留空"></td>
+    <td><button class="bi-del" onclick="biRemoveRow(this)" title="删除该行" style="border:none;background:transparent;color:#c0392b;cursor:pointer;font-size:16px">×</button></td>
+  </tr>`;
+}
+function biAddRows(n){
+  const body=document.getElementById('biBody');
+  for(let k=0;k<n;k++) body.insertAdjacentHTML('beforeend', biRowHtml());
+  biUpdateStat();
+}
+function biClear(){ document.getElementById('biBody').innerHTML=''; const p=document.getElementById('biPreview'); if(p) p.textContent=''; biUpdateStat(); }
+function biRemoveRow(btn){ const tr=btn.closest('tr'); if(tr) tr.remove(); biUpdateStat(); }
+function biTogglePaste(){ const w=document.getElementById('biPasteWrap'); w.style.display = w.style.display==='none'?'block':'none'; }
+function biUpdateStat(){
+  const rows=biRows();
+  const stat=document.getElementById('biStat');
+  if(stat) stat.textContent = rows.length ? `共 ${rows.length} 行` : '';
+}
+function biRows(){
+  const out=[];
+  document.querySelectorAll('#biBody tr.bi-row').forEach(tr=>{
+    const v=Array.from(tr.querySelectorAll('input,select')).map(el=>el.value);
+    out.push(v);
+  });
+  return out;
+}
+function biPreview(){
+  const rows=biRows();
+  let add=0, upd=0, err=0;
+  for(const r of rows){
+    const code=(r[1]||'').trim(), name=(r[2]||'').trim(), cust=(r[0]||'').trim();
+    if(!code || !name){ err++; continue; }
+    const c = cust ? DB.customers.find(x=>x.name===cust) : null;
+    const ex = c && DB.products.find(p=>p.code===code && p.customerId===c.id);
+    if(ex) upd++; else add++;
+  }
+  document.getElementById('biPreview').textContent = `预览：新增 ${add} · 更新 ${upd} · 缺必填(产品SKU/铁神型号) ${err}`;
+}
+function biImport(){
+  const head=['所属客户','产品SKU','铁神型号','类型','订购状态','报价','MOQ','产品图'];
+  const rows=biRows();
+  if(!rows.length){ toast('没有可导入的数据'); return; }
+  // importProducts 约定 rows[0] 为表头，故把 head 拼回第 0 行，保证纯数据行从 i=1 起逐行处理
+  const data=[head, ...rows];
+  const msg=importProducts(data, head, {autoCreateCustomer:true});
+  save(); renderProducts(); renderCustomers(); renderQuoteSelectors();
+  toast('导入成功：'+msg, 3500);
+  closeModal('batchImportModal');
+}
+// 解析粘贴文本：Tab 或逗号分隔；首行若为已知表头则按列名映射
+function biParsePaste(){
+  const ta=document.getElementById('biPaste');
+  const text=ta.value.replace(/\r/g,'');
+  if(!text.trim()){ toast('请先粘贴内容'); return; }
+  const lines=text.split('\n').filter(l=>l.trim()!=='');
+  const delim = lines[0].includes('\t') ? '\t' : ',';
+  const grid = delim==='\t' ? lines.map(l=>l.split('\t')) : parseCsv(text);
+  if(!grid.length){ toast('未解析到内容'); return; }
+  const head = grid[0].map(s=>String(s).trim());
+  const known=['产品SKU','铁神型号','所属客户','类型','订购状态','报价','MOQ','产品图'];
+  const isHead = head.some(h=>known.includes(h));
+  const dataRows = isHead ? grid.slice(1) : grid;
+  let colMap;
+  if(isHead){
+    colMap = ['所属客户','产品SKU','铁神型号','类型','订购状态','报价','MOQ','产品图'].map(h=>head.indexOf(h));
+  } else {
+    colMap = [0,1,2,3,4,5,6,7];
+  }
+  const mapped = dataRows.map(r => colMap.map(i => (i>=0 && r[i]!=null) ? String(r[i]).trim() : ''));
+  biSetRows(mapped);
+  biUpdateStat();
+  toast(`已填入 ${mapped.length} 行${isHead?'（按表头识别列）':'（按位置识别列）'}`);
+}
+function biSetRows(dataRows){
+  const body=document.getElementById('biBody');
+  body.innerHTML = dataRows.map(r=>{
+    const v = r.concat(Array(8).fill('')).slice(0,8);
+    const ord = /^(已订购|是|yes|true|1|✓|订购)/i.test(v[4]||'') ? '已订购' : '仅报价、未订购';
+    return `<tr class="bi-row">
+      <td><input class="bi-cust" list="biCustomers" value="${esc(v[0])}"></td>
+      <td><input class="bi-code" value="${esc(v[1])}"></td>
+      <td><input class="bi-name" value="${esc(v[2])}"></td>
+      <td><input class="bi-type" list="biTypes" value="${esc(v[3])}"></td>
+      <td><select class="bi-ord"><option${ord==='仅报价、未订购'?' selected':''}>仅报价、未订购</option><option${ord==='已订购'?' selected':''}>已订购</option></select></td>
+      <td><input class="bi-price" type="number" step="0.01" min="0" value="${esc(v[5])}"></td>
+      <td><input class="bi-moq" type="number" step="1" min="0" value="${esc(v[6])}"></td>
+      <td><input class="bi-img" value="${esc(v[7])}"></td>
+      <td><button class="bi-del" onclick="biRemoveRow(this)" title="删除该行" style="border:none;background:transparent;color:#c0392b;cursor:pointer;font-size:16px">×</button></td>
+    </tr>`;
+  }).join('');
 }
 
 function importConfigs(rows, head){
@@ -4485,20 +4848,20 @@ function printQuote(){
   window.print();
 }
 
-// ============ 导入模板（内嵌 xlsx）============
-const TEMPLATE_B64 = "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";
 function downloadTemplate(){
   try{
-    const bin = atob(TEMPLATE_B64);
-    const arr = new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
-    const blob = new Blob([arr], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    // 单一产品导入表：仅 8 个核心字段，其余信息导入后到产品详情补充
+    const head = ['所属客户','产品SKU','铁神型号','类型','订购状态','报价','MOQ','产品图'];
+    const sample = ['德国 Müller GmbH','YS-8801','不锈钢执手门锁','门锁','仅报价、未订购','68.50','100',''];
+    const esc = s => { s=String(s); return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+    const csv = '﻿' + [head, sample].map(r=>r.map(esc).join(',')).join('\r\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = '产品库-导入模板.xlsx';
+    a.href = url; a.download = '产品导入模板.csv';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(()=>URL.revokeObjectURL(url), 1000);
-    toast('模板已下载，用 Excel 打开填写');
+    toast('模板已下载（CSV，用 Excel 打开填写）');
   }catch(e){
     toast('下载失败：'+e.message);
   }
